@@ -38,6 +38,14 @@
     .mobile-section{display:block}
     @media (max-width: 820px){ .mobile-tabs{display:flex} .mobile-section{display:none} .mobile-section.active{display:block} }
     .flash{box-shadow:0 0 0 3px var(--accent) inset}
+/* --- Arreglo para colapsables --- */
+.card.collapsed .bd { display: none; }
+
+/* Jornadas clicables */
+details.round > summary { cursor: pointer; list-style: none; }
+details.round { border: 1px dashed #2a3242; border-radius: 12px; padding: 6px 10px; }
+
+    
   </style>
 </head>
 <body>
@@ -496,6 +504,29 @@
     window.addEventListener('resize', ()=>{ if(!isMobile()){ sections.forEach(sec=>sec && sec.classList.add('active')); } });
     if(isMobile()) activate('#sec-cuadros'); else sections.forEach(sec=>sec && sec.classList.add('active'));
   }
+
+    // --- Botón Colapsar / Expandir del resumen ---
+(function(){
+  const btn  = document.getElementById('toggleSummary');
+  const card = document.getElementById('summaryCard');
+  const KEY  = 'summaryCollapsed';
+
+  if(!btn || !card) return;
+
+  // Estado inicial
+  const collapsed = localStorage.getItem(KEY) === 'true';
+  if (collapsed) {
+    card.classList.add('collapsed');
+    btn.textContent = 'Expandir';
+  }
+
+  btn.addEventListener('click', ()=>{
+    const isCollapsed = card.classList.toggle('collapsed');
+    btn.textContent = isCollapsed ? 'Expandir' : 'Colapsar';
+    localStorage.setItem(KEY, String(isCollapsed));
+  });
+})();
+
   </script>
 </body>
 </html>
