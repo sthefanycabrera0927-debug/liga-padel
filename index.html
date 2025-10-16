@@ -466,7 +466,14 @@
       }).join('');
       return cards;
     };
-    box.innerHTML = `<div class="sum-grid">${legs.map(([t,r,k])=>makeBlock(t,r,k)).join('')}</div>`;
+ box.innerHTML = `<div class="sum-legend small">
+  <span class="legend-dot" style="background:#2b6cb0"></span> Ida
+  <span class="legend-dot" style="background:#2b7a0b; margin-left:10px"></span> Vuelta
+  <span class="legend-dot" style="background:#ffc107; margin-left:10px"></span> Pendiente
+  <span class="legend-dot" style="background:#32d296; margin-left:10px"></span> Cargado
+</div>
+<div class="sum-grid">${legs.map(([t,r,k])=>makeBlock(t,r,k)).join('')}</div>`;
+
 
     $$('#summary input[type="date"]').forEach(inp=>{
       inp.addEventListener('change', async function(){
