@@ -14,7 +14,7 @@
       --text:#0f1220;
       --muted:#5d667b;
       --border:#e6e9ef;
-      --accent:#2dd24c;     /* verde suave */
+      --accent:#2dd24c;
       --accent-ink:#0a1b10;
       --danger:#ff5470;
       --ok:#2dd24c;
@@ -42,7 +42,6 @@
       display:flex; align-items:center; justify-content:space-between;
       padding:12px 16px;
       border-bottom:1px solid var(--border);
-      cursor:default;
     }
     .card .bd{ padding:14px 16px }
     .pill{
@@ -84,26 +83,35 @@
     details.round>summary{ cursor:pointer; list-style:none; }
     details.round>summary::-webkit-details-marker{ display:none }
 
-    /* ======= MARCADOR COMPACTO =======
-       Dos filas (A/B) con inputs grandes por set, como tarjeta deportiva. */
+    /* ======= MARCADOR COMPACTO ======= */
     .score-row{
-      display:grid; grid-template-columns: 1fr auto auto auto 48px; gap:10px; align-items:center;
+      display:grid; grid-template-columns: 1fr repeat(3,64px) 1fr; gap:10px; align-items:center;
       padding:8px 0;
     }
     .score-row + .score-row{ border-top:1px solid var(--border) }
     .player-name{ font-weight:600 }
     .setBox{
-      width:56px; height:56px; border:1px solid var(--border); border-radius:10px;
+      width:64px; height:64px; border:1px solid var(--border); border-radius:10px;
       font-size:26px; text-align:center; font-weight:700;
     }
+    .setBox::-webkit-outer-spin-button, .setBox::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
     .wo-chip{ display:inline-flex; align-items:center; gap:6px; }
-    .mh-date{ display:flex; justify-content:flex-end; gap:10px; align-items:center }
-    .mh-date input{ width:auto; min-width:130px }
+    .mh-date{ display:flex; justify-content:flex-end; gap:10px; align-items:center; flex-wrap:wrap }
+    .mh-date input[type="date"]{ width:150px; min-width:120px }
 
     .sum-card{ border:1px solid var(--border); border-radius:12px; padding:12px; background:#fff }
     .pill-match{ display:flex; flex-direction:column; gap:6px; border:1px solid var(--border); background:#fff; padding:8px 10px; border-radius:10px; font-size:.95rem; margin:6px 0 }
     .pm--pending{ border-left:4px solid var(--warn) }
     .pm--done{ border-left:4px solid var(--ok) }
+
+    /* Mobile tuning */
+    @media (max-width:560px){
+      .setBox{ width:52px; height:52px; font-size:22px }
+      .score-row{ grid-template-columns: 1fr repeat(3,52px); }
+      .mh-date{ justify-content:space-between }
+      .mh-date .ok{ width:100%; order:3 }
+      .mh-date input[type="date"]{ width:100%; max-width:180px }
+    }
   </style>
 </head>
 <body>
@@ -111,8 +119,9 @@
     <header class="flex" style="justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:12px">
       <div>
         <h1>🏆 Liga Femenina – <span style="color:#10b981">No puedo, tengo pádel</span></h1>
-        <div class="small">Cruces ida/vuelta, resultados y tabla.</div>
+        <div class="small">Supabase + caché local. Cruces ida/vuelta, resultados y tabla.</div>
       </div>
+      <div class="pill">🌐 Supabase • v11</div>
     </header>
 
     <nav class="mobile-tabs" id="mobileTabs">
@@ -200,7 +209,7 @@
     </section>
 
     <footer class="flex" style="justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:6px">
-      <div class="small">Reglas: Victoria = <strong>3 pts</strong> • WO = 6–0 / 6–0.</div>
+      <div class="small">Reglas: Victoria = <strong>3 pts</strong> • Derrota en 3 sets = <strong>0.5 pt</strong> • WO = <strong>Walkover</strong> (no presentación) = <strong>6–0 / 6–0</strong>.</div>
       <div class="pill" id="connBadge">🔌 Local</div>
     </footer>
   </div>
@@ -374,11 +383,29 @@
     if(Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur;
   }
 
-  /* ======= MARCADOR COMPACTO ======= */
+  /* ======= MARCADOR COMPACTO + AUTOFLOW ======= */
   function makeSetCells(uniq, i, sets, side){
     const val = (sets[i] && sets[i][side==='A'?0:1]) || '';
     const id  = `${uniq}_s${i+1}${side.toLowerCase()}`;
-    return `<input class="setBox" id="${id}" type="number" min="0" inputmode="numeric" value="${val}">`;
+    return `<input class="setBox" id="${id}" type="number" min="0" inputmode="numeric" value="${val}" data-role="set" data-ord="${['a','b'].indexOf(side.toLowerCase()) + i*2}">`;
+  }
+
+  function wireAutoAdvance(card){
+    const fields = Array.from(card.querySelectorAll('input.setBox'))
+      .sort((a,b)=> Number(a.dataset.ord)-Number(b.dataset.ord));
+    const go = (idx)=>{ if(idx>=0 && idx<fields.length) fields[idx].focus(); };
+    fields.forEach((el,idx)=>{
+      el.addEventListener('input', ()=>{
+        const v = el.value.trim();
+        if(v.length>=1){ go(idx+1); }
+      });
+      el.addEventListener('keydown', (e)=>{
+        if(e.key==='Enter'){ e.preventDefault(); go(idx+1); }
+        if(e.key==='Backspace' && el.value===''){ go(idx-1); }
+        if(e.key==='ArrowLeft'){ go(idx-1); }
+        if(e.key==='ArrowRight'){ go(idx+1); }
+      });
+    });
   }
 
   function makeCard(a,b,leg,ri,idx){
@@ -390,11 +417,11 @@
     const wo = existing.wo ? 'checked' : '';
     const dateVal = toDateInputValue(existing.date);
 
-    return `<div class="card" style="margin-bottom:12px">
+    return `<div class="card match-card" data-uniq="${uniq}" style="margin-bottom:12px">
       <div class="bd">
-        <div class="mh-date small">📅
-          <input id="${uniq}_date" type="date" value="${dateVal||''}">
-          <label class="wo-chip"><input id="${uniq}_wo" type="checkbox" ${wo}> WO</label>
+        <div class="mh-date small">
+          📅 <input id="${uniq}_date" type="date" value="${dateVal||''}">
+          <label class="wo-chip"><input id="${uniq}_wo" type="checkbox" ${wo}> WO (Walkover)</label>
           <button class="ok" style="margin-left:auto" onclick="saveCard('${aId}','${bId}','${leg}',${ri},${idx})">${existing.id?'Actualizar':'Guardar'}</button>
         </div>
 
@@ -419,7 +446,6 @@
   function jornadaBlock(title, games, leg, ri){
     const gamesSorted = games.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
     const inner = gamesSorted.map((g,idx)=> makeCard(g[0],g[1],leg,ri,idx)).join('');
-    /* todas cerradas por defecto */
     return `<details class="round"><summary><h3 class="small" style="display:inline">${title}</h3></summary>${inner || '<div class="small">Sin partidos</div>'}</details>`;
   }
 
@@ -445,10 +471,13 @@
     </div>`;
     root.innerHTML = html;
 
+    // sincronizar fecha desde resumen
     $$('#cards input[type="date"]').forEach(inp=> inp.addEventListener('change', async function(){
       const uniq = this.id.replace('_date','');
       const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderMatches(); renderSummary(); }
     }));
+    // auto-advance
+    $$('#cards .match-card').forEach(card=> wireAutoAdvance(card));
   }
 
   window.saveCard = async (a,b,leg,ri,idx)=>{
@@ -529,7 +558,14 @@
       if(sA>sB){ stats[A].PG++; stats[B].PP++; } else { stats[B].PG++; stats[A].PP++; }
       stats[A].PTS+=ptsA; stats[B].PTS+=ptsB;
     });
-    const arr = state.teams.map(t=>stats[t.id]).filter(Boolean);
+    // ORDEN: PG desc, luego Games + desc, luego Dif desc, luego PTS desc
+    const arr = state.teams.map(t=>stats[t.id]).filter(Boolean).sort((x,y)=>{
+      if(y.PG!==x.PG) return y.PG-x.PG;
+      if(y.GW!==x.GW) return y.GW-x.GW;
+      const dx = (y.GW-y.GL) - (x.GW-x.GL);
+      if(dx!==0) return dx;
+      return (y.PTS||0)-(x.PTS||0);
+    });
     $('#standings tbody').innerHTML = arr.map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(r.name)}</td><td>${r.PJ}</td><td>${r.PG}</td><td>${r.PP}</td><td>${r.GW}</td><td>${r.GL}</td><td>${r.GW-r.GL}</td><td><strong>${(Math.round(r.PTS*10)/10).toFixed(1).replace('.0','')}</strong></td></tr>`).join('')
       || `<tr><td colspan="9" class="small">Sin datos</td></tr>`;
   }
