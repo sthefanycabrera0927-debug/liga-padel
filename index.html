@@ -14,7 +14,7 @@
       --text:#0f1220;
       --muted:#5d667b;
       --border:#e6e9ef;
-      --accent:#2dd24c;
+      --accent:#2dd24c;     /* verde suave */
       --accent-ink:#0a1b10;
       --danger:#ff5470;
       --ok:#2dd24c;
@@ -42,6 +42,7 @@
       display:flex; align-items:center; justify-content:space-between;
       padding:12px 16px;
       border-bottom:1px solid var(--border);
+      cursor:default;
     }
     .card .bd{ padding:14px 16px }
     .pill{
@@ -54,7 +55,7 @@
       background:#fff; color:#111; outline:none;
     }
     input[type='text'], input[type='number'], select, button{ width:100% }
-    .actions{ display:flex; gap:8px; flex-wrap:wrap }
+    .actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
     .primary{ background:var(--accent); color:var(--accent-ink); border:none; font-weight:700 }
     .ghost{ background:#fff }
     .danger{ background:var(--danger); color:#fff; border:none }
@@ -85,32 +86,32 @@
 
     /* ======= MARCADOR COMPACTO ======= */
     .score-row{
-      display:grid; grid-template-columns: 1fr repeat(3,64px) 1fr; gap:10px; align-items:center;
+      display:grid; grid-template-columns: 1fr repeat(3,64px); gap:10px; align-items:center;
       padding:8px 0;
     }
     .score-row + .score-row{ border-top:1px solid var(--border) }
-    .player-name{ font-weight:600 }
+    .player-name{ font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
     .setBox{
-      width:64px; height:64px; border:1px solid var(--border); border-radius:10px;
+      width:64px; height:56px; border:1px solid var(--border); border-radius:10px;
       font-size:26px; text-align:center; font-weight:700;
     }
-    .setBox::-webkit-outer-spin-button, .setBox::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
-    .wo-chip{ display:inline-flex; align-items:center; gap:6px; }
-    .mh-date{ display:flex; justify-content:flex-end; gap:10px; align-items:center; flex-wrap:wrap }
-    .mh-date input[type="date"]{ width:150px; min-width:120px }
+    .mh-date{
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:flex-end
+    }
+    .mh-date input[type="date"]{ width:auto; min-width:140px }
 
+    /* ======= resumen ======= */
     .sum-card{ border:1px solid var(--border); border-radius:12px; padding:12px; background:#fff }
     .pill-match{ display:flex; flex-direction:column; gap:6px; border:1px solid var(--border); background:#fff; padding:8px 10px; border-radius:10px; font-size:.95rem; margin:6px 0 }
     .pm--pending{ border-left:4px solid var(--warn) }
     .pm--done{ border-left:4px solid var(--ok) }
 
-    /* Mobile tuning */
-    @media (max-width:560px){
-      .setBox{ width:52px; height:52px; font-size:22px }
-      .score-row{ grid-template-columns: 1fr repeat(3,52px); }
+    /* ======= Mobile tweaks ======= */
+    @media (max-width: 560px){
+      .score-row{ grid-template-columns: 1fr repeat(3,52px); gap:8px }
+      .setBox{ width:52px; height:48px; font-size:22px }
       .mh-date{ justify-content:space-between }
-      .mh-date .ok{ width:100%; order:3 }
-      .mh-date input[type="date"]{ width:100%; max-width:180px }
+      .mh-date input[type="date"]{ min-width:0; flex:1 }
     }
   </style>
 </head>
@@ -151,7 +152,8 @@
 
     <section id="sec-cuadros" class="grid mobile-section">
       <div class="card">
-        <div class="hd"><strong>📆 Cuadros (Ida/Vuelta)</strong>
+        <div class="hd">
+          <strong>📆 Cuadros (Ida/Vuelta)</strong>
           <div class="actions">
             <button id="regenFixture" class="primary">Regenerar</button>
             <label class="small">Vista:
@@ -159,6 +161,9 @@
             </label>
             <label class="small">Jornada:
               <select id="filterRound" style="width:auto"><option value="ALL">Todas</option></select>
+            </label>
+            <label class="small">Pareja:
+              <select id="filterTeam" style="width:auto; min-width:160px"><option value="ALL">Todas</option></select>
             </label>
           </div>
         </div>
@@ -181,6 +186,9 @@
             </label>
             <label class="small">Jornada:
               <select id="sumRound" style="width:auto"><option value="ALL">Todas</option></select>
+            </label>
+            <label class="small">Pareja:
+              <select id="sumTeam" style="width:auto; min-width:160px"><option value="ALL">Todas</option></select>
             </label>
             <label class="small"><input type="checkbox" id="sumShow"> Mostrar resultados</label>
           </div>
@@ -209,7 +217,7 @@
     </section>
 
     <footer class="flex" style="justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:6px">
-      <div class="small">Reglas: Victoria = <strong>3 pts</strong> • Derrota en 3 sets = <strong>0.5 pt</strong> • WO = <strong>Walkover</strong> (no presentación) = <strong>6–0 / 6–0</strong>.</div>
+      <div class="small">Reglas: Victoria = <strong>3 pts</strong> • Derrota en 3 sets = <strong>0.5 pt</strong>.</div>
       <div class="pill" id="connBadge">🔌 Local</div>
     </footer>
   </div>
@@ -261,8 +269,15 @@
 
   function buildRoundRobin(ids){
     const arr = ids.slice(); if(arr.length%2===1) arr.push('BYE'); const n = arr.length; const rounds=[];
-    for(let r=0; r<n-1; r++){ const round=[]; for(let i=0;i<n/2;i++){ const a=arr[i], b=arr[n-1-i]; if(a!=='BYE' && b!=='BYE') round.push([a,b]); }
-      rounds.push(round); arr.splice(1,0,arr.pop()); }
+    for(let r=0; r<n-1; r++){
+      const round=[];
+      for(let i=0;i<n/2;i++){
+        const a=arr[i], b=arr[n-1-i];
+        if(a!=='BYE' && b!=='BYE') round.push([a,b]);
+      }
+      rounds.push(round);
+      arr.splice(1,0,arr.pop());
+    }
     return rounds;
   }
 
@@ -282,14 +297,19 @@
         state.teams = teams.map(t=>({ id:t.id, name:t.name, position:t.position }));
       }
       const { data: matches } = await supabase.from('matches').select('*').eq('league_id', LEAGUE_ID);
-      state.matches = (matches||[]).map(m=>({ id:m.id, uniq:m.uniq, A:m.team_a, B:m.team_b, leg:m.leg, round:m.round, sets:m.sets||[], wo:!!m.wo, ptsA:Number(m.pts_a||0), ptsB:Number(m.pts_b||0), date:m.date||'' }));
+      state.matches = (matches||[]).map(m=>({ id:m.id, uniq:m.uniq, A:m.team_a, B:m.team_b, leg:m.leg, round:m.round, sets:m.sets||[], ptsA:Number(m.pts_a||0), ptsB:Number(m.pts_b||0), date:m.date||'' }));
     }else{
       if(state.teams.length===0){ state.teams = DEFAULT_TEAMS.map((name,i)=>({ id: uid(), name, position:i })); saveLocal(); }
     }
+
     const ids = state.teams.map(t=>t.id);
     state.fixtures = { ida: buildRoundRobin(ids), vuelta: [] };
     state.fixtures.vuelta = state.fixtures.ida.map(r=> r.map(p=>[p[1],p[0]]));
-    populateFilterRounds(); populateSummaryRounds();
+
+    populateFilterRounds();
+    populateSummaryRounds();
+    populateTeamFilters();
+
     renderTeams(); renderCards(); renderSummary(); renderMatches(); renderStandings();
   }
 
@@ -304,8 +324,10 @@
     });
     $('#filterLeg').addEventListener('change', renderCards);
     $('#filterRound').addEventListener('change', renderCards);
+    $('#filterTeam').addEventListener('change', renderCards);
     $('#sumLeg').addEventListener('change', renderSummary);
     $('#sumRound').addEventListener('change', renderSummary);
+    $('#sumTeam').addEventListener('change', renderSummary);
     const sumShow = $('#sumShow'); sumShow.checked = !!state.showSummaryResults; sumShow.addEventListener('change', ()=>{ state.showSummaryResults = sumShow.checked; saveLocal(); renderSummary(); });
     $('#resetLocal').addEventListener('click', ()=>{ if(confirm('¿Borrar caché local?')){ localStorage.removeItem(LS_KEY); location.reload(); } });
 
@@ -336,15 +358,18 @@
   function renderTeams(){
     const list = $('#teamList');
     const html = state.teams.map((t,i)=>`
-      <div class="row" style="align-items:center">
-        <div class="col-10"><strong>${escapeHtml(t.name)}</strong> <span class="small">· #${i+1}</span></div>
-        <div class="col-2 actions">
+      <div class="row" style="align-items:center; display:flex; justify-content:space-between; gap:8px; padding:6px 0">
+        <div class="col-10" style="flex:1 1 auto">
+          <strong>${escapeHtml(t.name)}</strong> <span class="small">· #${i+1}</span>
+        </div>
+        <div class="col-2 actions" style="flex:0 0 auto">
           <button class="ghost" onclick="moveTeam(${i},-1)">↑</button>
           <button class="ghost" onclick="moveTeam(${i},1)">↓</button>
           <button class="danger" onclick="removeTeam('${t.id}')">Eliminar</button>
         </div>
       </div>`).join('');
     list.innerHTML = html || '<span class="small">Sin parejas</span>';
+    populateTeamFilters();
   }
 
   window.moveTeam = async (i,dir)=>{
@@ -382,30 +407,20 @@
     sel.innerHTML = '<option value="ALL">Todas</option>'+ Array.from({length:rounds},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('');
     if(Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur;
   }
+  function populateTeamFilters(){
+    const opts = ['<option value="ALL">Todas</option>']
+      .concat(state.teams.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`))
+      .join('');
+    const ft = $('#filterTeam'), st = $('#sumTeam');
+    if(ft) ft.innerHTML = opts;
+    if(st) st.innerHTML = opts;
+  }
 
-  /* ======= MARCADOR COMPACTO + AUTOFLOW ======= */
+  /* ======= MARCADOR COMPACTO ======= */
   function makeSetCells(uniq, i, sets, side){
     const val = (sets[i] && sets[i][side==='A'?0:1]) || '';
     const id  = `${uniq}_s${i+1}${side.toLowerCase()}`;
-    return `<input class="setBox" id="${id}" type="number" min="0" inputmode="numeric" value="${val}" data-role="set" data-ord="${['a','b'].indexOf(side.toLowerCase()) + i*2}">`;
-  }
-
-  function wireAutoAdvance(card){
-    const fields = Array.from(card.querySelectorAll('input.setBox'))
-      .sort((a,b)=> Number(a.dataset.ord)-Number(b.dataset.ord));
-    const go = (idx)=>{ if(idx>=0 && idx<fields.length) fields[idx].focus(); };
-    fields.forEach((el,idx)=>{
-      el.addEventListener('input', ()=>{
-        const v = el.value.trim();
-        if(v.length>=1){ go(idx+1); }
-      });
-      el.addEventListener('keydown', (e)=>{
-        if(e.key==='Enter'){ e.preventDefault(); go(idx+1); }
-        if(e.key==='Backspace' && el.value===''){ go(idx-1); }
-        if(e.key==='ArrowLeft'){ go(idx-1); }
-        if(e.key==='ArrowRight'){ go(idx+1); }
-      });
-    });
+    return `<input class="setBox" id="${id}" type="number" min="0" inputmode="numeric" value="${val}">`;
   }
 
   function makeCard(a,b,leg,ri,idx){
@@ -414,14 +429,14 @@
     const uniq = [aId,bId].slice().sort().join('__')+'_'+leg+'_'+ri+'_'+idx;
     const existing = state.matches.find(m=>m.uniq===uniq) || {};
     const sets = existing.sets || [];
-    const wo = existing.wo ? 'checked' : '';
     const dateVal = toDateInputValue(existing.date);
 
-    return `<div class="card match-card" data-uniq="${uniq}" style="margin-bottom:12px">
+    // Card
+    const cardHtml = `<div class="card" style="margin-bottom:12px">
       <div class="bd">
         <div class="mh-date small">
-          📅 <input id="${uniq}_date" type="date" value="${dateVal||''}">
-          <label class="wo-chip"><input id="${uniq}_wo" type="checkbox" ${wo}> WO (Walkover)</label>
+          <span>📅</span>
+          <input id="${uniq}_date" type="date" value="${dateVal||''}">
           <button class="ok" style="margin-left:auto" onclick="saveCard('${aId}','${bId}','${leg}',${ri},${idx})">${existing.id?'Actualizar':'Guardar'}</button>
         </div>
 
@@ -430,21 +445,26 @@
           ${makeSetCells(uniq,0,sets,'A')}
           ${makeSetCells(uniq,1,sets,'A')}
           ${makeSetCells(uniq,2,sets,'A')}
-          <div></div>
         </div>
         <div class="score-row">
           <div class="player-name">B: ${B}</div>
           ${makeSetCells(uniq,0,sets,'B')}
           ${makeSetCells(uniq,1,sets,'B')}
           ${makeSetCells(uniq,2,sets,'B')}
-          <div></div>
         </div>
       </div>
     </div>`;
+
+    return cardHtml;
   }
 
   function jornadaBlock(title, games, leg, ri){
-    const gamesSorted = games.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
+    // Filtro por pareja
+    const teamFilter = $('#filterTeam')?.value || 'ALL';
+    const filtered = (teamFilter==='ALL') ? games
+      : games.filter(([x,y])=> x===teamFilter || y===teamFilter);
+
+    const gamesSorted = filtered.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
     const inner = gamesSorted.map((g,idx)=> makeCard(g[0],g[1],leg,ri,idx)).join('');
     return `<details class="round"><summary><h3 class="small" style="display:inline">${title}</h3></summary>${inner || '<div class="small">Sin partidos</div>'}</details>`;
   }
@@ -465,54 +485,94 @@
     if(info) info.textContent = `Ida: ${ida.reduce((a,r)=>a+r.length,0)} / ${perLeg} · Vuelta: ${vuelta.reduce((a,r)=>a+r.length,0)} / ${perLeg}`;
     const legFilter = $('#filterLeg').value || 'ALL';
     const showIda = (legFilter==='ALL' || legFilter==='ida'); const showVuelta = (legFilter==='ALL' || legFilter==='vuelta');
-    const html = `<div style="display:flex; gap:18px; align-items:flex-start">
+    const html = `<div style="display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap">
       ${(showIda? col('IDA', ida, 'ida') : '')}
       ${(showVuelta? col('VUELTA', vuelta, 'vuelta') : '')}
     </div>`;
     root.innerHTML = html;
 
-    // sincronizar fecha desde resumen
+    // Auto-avance en inputs del marcador
+    bindAutoAdvance(root);
+
+    // Sincronizar fecha desde la card hacia el resumen/lista
     $$('#cards input[type="date"]').forEach(inp=> inp.addEventListener('change', async function(){
       const uniq = this.id.replace('_date','');
       const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderMatches(); renderSummary(); }
     }));
-    // auto-advance
-    $$('#cards .match-card').forEach(card=> wireAutoAdvance(card));
+  }
+
+  function bindAutoAdvance(scope){
+    const inputs = $$('input.setBox', scope);
+    // Orden deseado: A1 -> B1 -> A2 -> B2 -> A3 -> B3
+    const order = [];
+    // construir orden por card
+    const cards = $$('.card', scope);
+    cards.forEach(card=>{
+      const cardInputs = [
+        ...card.querySelectorAll('input[id$="_s1a"]'),
+        ...card.querySelectorAll('input[id$="_s1b"]'),
+        ...card.querySelectorAll('input[id$="_s2a"]'),
+        ...card.querySelectorAll('input[id$="_s2b"]'),
+        ...card.querySelectorAll('input[id$="_s3a"]'),
+        ...card.querySelectorAll('input[id$="_s3b"]'),
+      ];
+      order.push(...cardInputs);
+    });
+
+    order.forEach((el,idx)=>{
+      el.addEventListener('input', ()=>{
+        // si ya tiene 1-2 dígitos, saltar al siguiente
+        if(String(el.value).length>=1){
+          const next = order[idx+1];
+          if(next) next.focus();
+        }
+      });
+      el.addEventListener('keydown', (e)=>{
+        if(e.key==='Enter'){
+          e.preventDefault();
+          const next = order[idx+1]; if(next) next.focus();
+        }
+        if(e.key==='ArrowLeft' && el.selectionStart===0){
+          const prev = order[idx-1]; if(prev){ e.preventDefault(); prev.focus(); }
+        }
+        if(e.key==='ArrowRight' && el.selectionStart===String(el.value).length){
+          const next = order[idx+1]; if(next){ e.preventDefault(); next.focus(); }
+        }
+      });
+    });
   }
 
   window.saveCard = async (a,b,leg,ri,idx)=>{
     const pair = [a,b].slice().sort().join('__'); const uniq = `${pair}_${leg}_${ri}_${idx}`;
     const get = id => document.getElementById(id);
-    const wo = get(uniq+'_wo').checked;
     const date = (get(uniq+'_date') && get(uniq+'_date').value) || null;
 
-    let sets=[];
-    if(wo){ sets=[[6,0],[6,0]]; }
-    else{
-      const vals = [[uniq+'_s1a',uniq+'_s1b'],[uniq+'_s2a',uniq+'_s2b'],[uniq+'_s3a',uniq+'_s3b']]
-        .map(ids=>[Number(get(ids[0]).value)||0, Number(get(ids[1]).value)||0])
-        .filter(ab=>ab[0]>0 || ab[1]>0);
-      if(vals.length<2){ alert('Carga al menos dos sets o marca WO'); return; }
-      sets = vals;
-    }
+    const vals = [[uniq+'_s1a',uniq+'_s1b'],[uniq+'_s2a',uniq+'_s2b'],[uniq+'_s3a',uniq+'_s3b']]
+      .map(ids=>[Number(get(ids[0]).value)||0, Number(get(ids[1]).value)||0])
+      .filter(ab=>ab[0]>0 || ab[1]>0);
 
-    const sw = sets.reduce((acc,ab)=>{ if(ab[0]>ab[1]) acc.a++; else if(ab[1]>ab[0]) acc.b++; return acc; }, {a:0,b:0});
-    if(sw.a===sw.b && sets.length<3){ alert('Empate a sets, falta el 3er set'); return; }
+    if(vals.length<2){ alert('Carga al menos dos sets'); return; }
+
+    const sw = vals.reduce((acc,ab)=>{ if(ab[0]>ab[1]) acc.a++; else if(ab[1]>ab[0]) acc.b++; return acc; }, {a:0,b:0});
+    if(sw.a===sw.b && vals.length<3){ alert('Empate a sets, falta el 3er set'); return; }
     const winner = sw.a>sw.b? 'A':'B';
-    let ptsA=0, ptsB=0; if(winner==='A'){ ptsA+=3; if(sets.length===3) ptsB+=0.5; } else { ptsB+=3; if(sets.length===3) ptsA+=0.5; }
+    let ptsA=0, ptsB=0; if(winner==='A'){ ptsA+=3; if(vals.length===3) ptsB+=0.5; } else { ptsB+=3; if(vals.length===3) ptsA+=0.5; }
 
     let rec = state.matches.find(m=>m.uniq===uniq);
-    const base = { uniq, A:a, B:b, leg, round:ri+1, sets, wo, ptsA, ptsB, date };
+    const base = { uniq, A:a, B:b, leg, round:ri+1, sets: vals, ptsA, ptsB, date };
     if(rec){ Object.assign(rec, base); } else { rec = { id: uid(), ...base }; state.matches.push(rec); }
     await upsertMatch(rec);
     renderMatches(); renderStandings(); renderSummary();
-    try{ const det = document.getElementById(uniq+'_date').closest('details.round'); if(det) det.open=false; const sum=$('#summary'); sum&&sum.scrollIntoView({behavior:'smooth'}); }catch{}
+    try{
+      const det = document.getElementById(uniq+'_date').closest('details.round'); if(det) det.open=false;
+      const sum=$('#summary'); sum&&sum.scrollIntoView({behavior:'smooth'});
+    }catch{}
   };
 
   async function upsertMatch(rec){
     if(supabase){
       const payload = { league_id: LEAGUE_ID, uniq: rec.uniq, leg: rec.leg, round: rec.round,
-        team_a: rec.A, team_b: rec.B, date: rec.date, wo: rec.wo, sets: rec.sets, pts_a: rec.ptsA, pts_b: rec.ptsB };
+        team_a: rec.A, team_b: rec.B, date: rec.date, wo: false, sets: rec.sets, pts_a: rec.ptsA, pts_b: rec.ptsB };
       const { data, error } = await supabase.from('matches').upsert(payload).select('*').single();
       if(error){ console.warn(error); alert('No se pudo guardar en Supabase'); }
       else { rec.id = data.id; }
@@ -539,10 +599,9 @@
       const winA = m.ptsA>m.ptsB, winB = m.ptsB>m.ptsA;
       const aL = winA? '🏅 '+aN : aN; const bL = winB? '🏅 '+bN : bN;
       const setsTxt = (m.sets||[]).map(ab=> `${(ab[0]||0)}-${(ab[1]||0)}`).join(', ');
-      const tag = m.wo? '<span class="pill">WO</span>' : '';
       const when = m.date? ` • <span class="small">${fmt(m.date)}</span>` : '';
       return `<div class="flex" style="justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border)">
-        <div><div><span class="pill">R${m.round}</span> <strong>${aL}</strong> vs <strong>${bL}</strong>${when}</div><div class="small">Sets: ${setsTxt} ${tag}</div></div>
+        <div><div><span class="pill">R${m.round}</span> <strong>${aL}</strong> vs <strong>${bL}</strong>${when}</div><div class="small">Sets: ${setsTxt}</div></div>
         <div class="actions"><button class="danger" onclick="deleteMatch('${m.id||m.uniq}')">Eliminar</button></div>
       </div>`;
     }).join('');
@@ -558,14 +617,9 @@
       if(sA>sB){ stats[A].PG++; stats[B].PP++; } else { stats[B].PG++; stats[A].PP++; }
       stats[A].PTS+=ptsA; stats[B].PTS+=ptsB;
     });
-    // ORDEN: PG desc, luego Games + desc, luego Dif desc, luego PTS desc
-    const arr = state.teams.map(t=>stats[t.id]).filter(Boolean).sort((x,y)=>{
-      if(y.PG!==x.PG) return y.PG-x.PG;
-      if(y.GW!==x.GW) return y.GW-x.GW;
-      const dx = (y.GW-y.GL) - (x.GW-x.GL);
-      if(dx!==0) return dx;
-      return (y.PTS||0)-(x.PTS||0);
-    });
+    // Orden: PG desc, luego GW desc, luego PTS desc (fallback)
+    const arr = state.teams.map(t=>stats[t.id]).filter(Boolean)
+      .sort((x,y)=> (y.PG-x.PG) || (y.GW-x.GW) || (y.PTS-x.PTS));
     $('#standings tbody').innerHTML = arr.map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(r.name)}</td><td>${r.PJ}</td><td>${r.PG}</td><td>${r.PP}</td><td>${r.GW}</td><td>${r.GL}</td><td>${r.GW-r.GL}</td><td><strong>${(Math.round(r.PTS*10)/10).toFixed(1).replace('.0','')}</strong></td></tr>`).join('')
       || `<tr><td colspan="9" class="small">Sin datos</td></tr>`;
   }
@@ -574,6 +628,7 @@
     const box = $('#summary');
     const legFilter = $('#sumLeg').value || 'ALL';
     const roundFilter = $('#sumRound').value || 'ALL';
+    const teamFilter = $('#sumTeam').value || 'ALL';
     const showResults = $('#sumShow').checked;
     const legs=[];
     if(legFilter==='ALL' || legFilter==='ida') legs.push(['IDA', state.fixtures.ida, 'ida']);
@@ -583,7 +638,9 @@
       if(!rounds || !rounds.length) return '';
       const cards = rounds.map((games,i)=>{
         if(roundFilter!=='ALL' && i!==Number(roundFilter)-1) return '';
-        const gamesSorted = games.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
+        // filtro por pareja
+        const filtered = (teamFilter==='ALL') ? games : games.filter(([x,y])=> x===teamFilter || y===teamFilter);
+        const gamesSorted = filtered.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
         const items = gamesSorted.map((pair,idx)=>{
           const [a,b] = (indexOfTeam(pair[0])<=indexOfTeam(pair[1]))? [pair[0],pair[1]] : [pair[1],pair[0]];
           const uniq = [a,b].slice().sort().join('__')+'_'+leg+'_'+i+'_'+idx;
