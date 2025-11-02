@@ -14,7 +14,7 @@
       --text:#0f1220;
       --muted:#5d667b;
       --border:#e6e9ef;
-      --accent:#2dd24c;     /* verde suave */
+      --accent:#2dd24c;
       --accent-ink:#0a1b10;
       --danger:#ff5470;
       --ok:#2dd24c;
@@ -42,7 +42,6 @@
       display:flex; align-items:center; justify-content:space-between;
       padding:12px 16px;
       border-bottom:1px solid var(--border);
-      cursor:default;
     }
     .card .bd{ padding:14px 16px }
     .pill{
@@ -79,7 +78,7 @@
     .card.togglable .hd{ cursor:pointer }
     .hd .toggle-tip{ font-size:.85rem; color:var(--muted); margin-left:8px }
 
-    /* ======= Jornadas ======= */
+    /* ======= Jornadas (modo lista) ======= */
     details.round{ border:1px dashed var(--border); border-radius:12px; padding:6px 10px; background:#fff }
     details.round>summary{ cursor:pointer; list-style:none; }
     details.round>summary::-webkit-details-marker{ display:none }
@@ -100,6 +99,24 @@
     }
     .mh-date input[type="date"]{ width:auto; min-width:140px }
 
+    /* ======= Vista DIAGRAMA (tipo bracket simple) ======= */
+    .bracket{ display:grid; gap:12px }
+    .br-match{
+      display:grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items:center;
+      gap:12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px;
+      background:#fff;
+    }
+    .br-side{ display:flex; align-items:center; gap:8px; min-width:0 }
+    .br-name{ font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+    .br-center{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center }
+    .br-center .setBox{ width:52px; height:46px; font-size:20px }
+    .br-top{ display:flex; align-items:center; gap:8px; justify-content:space-between; margin-bottom:6px; color:var(--muted) }
+
     /* ======= resumen ======= */
     .sum-card{ border:1px solid var(--border); border-radius:12px; padding:12px; background:#fff }
     .pill-match{ display:flex; flex-direction:column; gap:6px; border:1px solid var(--border); background:#fff; padding:8px 10px; border-radius:10px; font-size:.95rem; margin:6px 0 }
@@ -112,6 +129,7 @@
       .setBox{ width:52px; height:48px; font-size:22px }
       .mh-date{ justify-content:space-between }
       .mh-date input[type="date"]{ min-width:0; flex:1 }
+      .br-center .setBox{ width:46px; height:42px; font-size:18px }
     }
   </style>
 </head>
@@ -122,7 +140,12 @@
         <h1>🏆 Liga Femenina – <span style="color:#10b981">No puedo, tengo pádel</span></h1>
         <div class="small">Supabase + caché local. Cruces ida/vuelta, resultados y tabla.</div>
       </div>
-      <div class="pill">🌐 Supabase • v11</div>
+      <div class="actions" style="gap:6px">
+        <span class="pill" id="connBadge">🔌 Local</span>
+        <button id="btnLogin" class="ghost">Iniciar sesión con Google</button>
+        <button id="btnLogout" class="ghost" style="display:none">Salir</button>
+        <span class="small" id="whoami"></span>
+      </div>
     </header>
 
     <nav class="mobile-tabs" id="mobileTabs">
@@ -153,10 +176,16 @@
     <section id="sec-cuadros" class="grid mobile-section">
       <div class="card">
         <div class="hd">
-          <strong>📆 Cuadros (Ida/Vuelta)</strong>
+          <strong>📆 Cruces</strong>
           <div class="actions">
             <button id="regenFixture" class="primary">Regenerar</button>
             <label class="small">Vista:
+              <select id="viewMode" style="width:auto">
+                <option value="LIST">Lista</option>
+                <option value="DIAGRAM">Diagrama</option>
+              </select>
+            </label>
+            <label class="small">Leg:
               <select id="filterLeg" style="width:auto"><option value="ALL">Todo</option><option value="ida">Ida</option><option value="vuelta">Vuelta</option></select>
             </label>
             <label class="small">Jornada:
@@ -210,15 +239,11 @@
           </div>
         </div>
       </div>
-      <div class="card">
-        <div class="hd"><strong>🗓️ Partidos guardados</strong><span class="small">Se muestran desde Supabase o caché</span></div>
-        <div class="bd" id="matches"></div>
-      </div>
+      <!-- Se elimina la tarjeta "Partidos guardados" como pediste -->
     </section>
 
     <footer class="flex" style="justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:6px">
       <div class="small">Reglas: Victoria = <strong>3 pts</strong> • Derrota en 3 sets = <strong>0.5 pt</strong>.</div>
-      <div class="pill" id="connBadge">🔌 Local</div>
     </footer>
   </div>
 
@@ -226,7 +251,9 @@
   const SUPABASE_URL = 'https://dyaptlmncbbmruyduerv.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5YXB0bG1uY2JibXJ1eWR1ZXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1Nzc0MjgsImV4cCI6MjA3NjE1MzQyOH0.5bSZuq8G1XW3LYoM92J5skRuUpnUQYbd_oKT3toTSlA';
   const LEAGUE_ID = 'lfnpd-2025';
-  const ALLOW_PUBLIC_WRITE = true;
+
+  // Si querés exigir login para editar, poné true:
+  const REQUIRE_LOGIN_FOR_EDITS = false;
 
   import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
   const hasSB = SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length > 20;
@@ -238,8 +265,13 @@
   let state = loadLocal() || { teams: [], matches: [], fixtures:{ida:[],vuelta:[]}, dates:{}, showSummaryResults:false };
   const DEFAULT_TEAMS = ['Jessi/Ck','Vanessa/Auri','Patty/Vero','Valen/Sele','Enyor/Stef','Nathaly/Cristina','Nativid/Olga'];
 
+  // Auth state
+  let session = null;
+
+  // UI init
   $('#connBadge').textContent = hasSB ? '🌐 Supabase' : '🔌 Local';
   initTabs();
+  initAuthUI();
   await reloadAll();
   bindUI();
 
@@ -270,13 +302,8 @@
   function buildRoundRobin(ids){
     const arr = ids.slice(); if(arr.length%2===1) arr.push('BYE'); const n = arr.length; const rounds=[];
     for(let r=0; r<n-1; r++){
-      const round=[];
-      for(let i=0;i<n/2;i++){
-        const a=arr[i], b=arr[n-1-i];
-        if(a!=='BYE' && b!=='BYE') round.push([a,b]);
-      }
-      rounds.push(round);
-      arr.splice(1,0,arr.pop());
+      const round=[]; for(let i=0;i<n/2;i++){ const a=arr[i], b=arr[n-1-i]; if(a!=='BYE' && b!=='BYE') round.push([a,b]); }
+      rounds.push(round); arr.splice(1,0,arr.pop());
     }
     return rounds;
   }
@@ -285,14 +312,10 @@
     if(supabase){
       const { data: teams } = await supabase.from('teams').select('*').eq('league_id', LEAGUE_ID).order('position');
       if(!teams || teams.length===0){
-        if(ALLOW_PUBLIC_WRITE){
-          const seed = DEFAULT_TEAMS.map((name, i)=>({ name, position:i, league_id:LEAGUE_ID }));
-          await supabase.from('teams').insert(seed);
-          const { data: t2 } = await supabase.from('teams').select('*').eq('league_id', LEAGUE_ID).order('position');
-          state.teams = (t2||[]).map(t=>({ id:t.id, name:t.name, position:t.position }));
-        }else{
-          state.teams = DEFAULT_TEAMS.map((name,i)=>({ id: uid(), name, position:i }));
-        }
+        const seed = DEFAULT_TEAMS.map((name, i)=>({ name, position:i, league_id:LEAGUE_ID }));
+        await supabase.from('teams').insert(seed);
+        const { data: t2 } = await supabase.from('teams').select('*').eq('league_id', LEAGUE_ID).order('position');
+        state.teams = (t2||[]).map(t=>({ id:t.id, name:t.name, position:t.position }));
       }else{
         state.teams = teams.map(t=>({ id:t.id, name:t.name, position:t.position }));
       }
@@ -310,7 +333,7 @@
     populateSummaryRounds();
     populateTeamFilters();
 
-    renderTeams(); renderCards(); renderSummary(); renderMatches(); renderStandings();
+    renderTeams(); renderCards(); renderSummary(); renderStandings();
   }
 
   function bindUI(){
@@ -323,6 +346,7 @@
       renderCards(); populateFilterRounds(); populateSummaryRounds(); renderSummary();
     });
     $('#filterLeg').addEventListener('change', renderCards);
+    $('#viewMode').addEventListener('change', renderCards);
     $('#filterRound').addEventListener('change', renderCards);
     $('#filterTeam').addEventListener('change', renderCards);
     $('#sumLeg').addEventListener('change', renderSummary);
@@ -343,6 +367,7 @@
     const name = $('#teamName').value.trim(); if(!name){ alert('Nombre vacío'); return; }
     if(state.teams.some(t=>t.name.toLowerCase()===name.toLowerCase())){ alert('Ya existe'); return; }
     const position = state.teams.length;
+    if(!canEdit()){ alert('Debes iniciar sesión para editar.'); return; }
     if(supabase){
       const { data, error } = await supabase.from('teams').insert({ name, position, league_id: LEAGUE_ID }).select('*').single();
       if(error){ alert('No se pudo guardar en Supabase'); console.warn(error); return; }
@@ -373,6 +398,7 @@
   }
 
   window.moveTeam = async (i,dir)=>{
+    if(!canEdit()){ alert('Debes iniciar sesión para editar.'); return; }
     const j=i+dir; if(j<0 || j>=state.teams.length) return;
     const x=state.teams.splice(i,1)[0]; state.teams.splice(j,0,x);
     state.teams.forEach((t,idx)=> t.position = idx);
@@ -383,6 +409,7 @@
   };
 
   window.removeTeam = async (id)=>{
+    if(!canEdit()){ alert('Debes iniciar sesión para editar.'); return; }
     if(!confirm('¿Eliminar esta pareja?')) return;
     if(supabase){
       await supabase.from('matches').delete().eq('league_id', LEAGUE_ID).or('team_a.eq.'+id+',team_b.eq.'+id);
@@ -416,14 +443,15 @@
     if(st) st.innerHTML = opts;
   }
 
-  /* ======= MARCADOR COMPACTO ======= */
-  function makeSetCells(uniq, i, sets, side){
+  /* ======= Helpers marcador ======= */
+  function setCell(uniq, i, side, sets){
     const val = (sets[i] && sets[i][side==='A'?0:1]) || '';
     const id  = `${uniq}_s${i+1}${side.toLowerCase()}`;
     return `<input class="setBox" id="${id}" type="number" min="0" inputmode="numeric" value="${val}">`;
   }
 
-  function makeCard(a,b,leg,ri,idx){
+  /* ======= Cards (modo LISTA) ======= */
+  function makeCardList(a,b,leg,ri,idx){
     const ia=indexOfTeam(a), ib=indexOfTeam(b); const aId= (ia<=ib)? a:b, bId=(ia<=ib)? b:a;
     const A = escapeHtml(teamName(aId)); const B = escapeHtml(teamName(bId));
     const uniq = [aId,bId].slice().sort().join('__')+'_'+leg+'_'+ri+'_'+idx;
@@ -431,41 +459,67 @@
     const sets = existing.sets || [];
     const dateVal = toDateInputValue(existing.date);
 
-    // Card
-    const cardHtml = `<div class="card" style="margin-bottom:12px">
+    return `<div class="card" style="margin-bottom:12px">
       <div class="bd">
         <div class="mh-date small">
           <span>📅</span>
           <input id="${uniq}_date" type="date" value="${dateVal||''}">
-          <button class="ok" style="margin-left:auto" onclick="saveCard('${aId}','${bId}','${leg}',${ri},${idx})">${existing.id?'Actualizar':'Guardar'}</button>
+          <div class="actions" style="margin-left:auto; gap:6px">
+            <button class="ok" onclick="saveCard('${aId}','${bId}','${leg}',${ri},${idx})">${existing.id?'Actualizar':'Guardar'}</button>
+            <button class="ghost" onclick="clearCard('${uniq}')">Borrar resultado</button>
+          </div>
         </div>
-
         <div class="score-row">
           <div class="player-name">A: ${A}</div>
-          ${makeSetCells(uniq,0,sets,'A')}
-          ${makeSetCells(uniq,1,sets,'A')}
-          ${makeSetCells(uniq,2,sets,'A')}
+          ${setCell(uniq,0,'A',sets)}${setCell(uniq,1,'A',sets)}${setCell(uniq,2,'A',sets)}
         </div>
         <div class="score-row">
           <div class="player-name">B: ${B}</div>
-          ${makeSetCells(uniq,0,sets,'B')}
-          ${makeSetCells(uniq,1,sets,'B')}
-          ${makeSetCells(uniq,2,sets,'B')}
+          ${setCell(uniq,0,'B',sets)}${setCell(uniq,1,'B',sets)}${setCell(uniq,2,'B',sets)}
         </div>
       </div>
     </div>`;
+  }
 
-    return cardHtml;
+  /* ======= Cards (modo DIAGRAMA) ======= */
+  function makeCardDiagram(a,b,leg,ri,idx){
+    const ia=indexOfTeam(a), ib=indexOfTeam(b); const aId= (ia<=ib)? a:b, bId=(ia<=ib)? b:a;
+    const A = escapeHtml(teamName(aId)); const B = escapeHtml(teamName(bId));
+    const uniq = [aId,bId].slice().sort().join('__')+'_'+leg+'_'+ri+'_'+idx;
+    const existing = state.matches.find(m=>m.uniq===uniq) || {};
+    const sets = existing.sets || [];
+    const dateVal = toDateInputValue(existing.date);
+
+    return `<div class="br-match">
+      <div class="br-side"><span class="pill">A</span> <span class="br-name">${A}</span></div>
+      <div>
+        <div class="br-top small">
+          <span>📅</span>
+          <input id="${uniq}_date" type="date" value="${dateVal||''}">
+          <div class="actions" style="margin-left:auto; gap:6px">
+            <button class="ok" onclick="saveCard('${aId}','${bId}','${leg}',${ri},${idx})">${existing.id?'Actualizar':'Guardar'}</button>
+            <button class="ghost" onclick="clearCard('${uniq}')">Borrar</button>
+          </div>
+        </div>
+        <div class="br-center">
+          ${setCell(uniq,0,'A',sets)}${setCell(uniq,0,'B',sets)}
+          ${setCell(uniq,1,'A',sets)}${setCell(uniq,1,'B',sets)}
+          ${setCell(uniq,2,'A',sets)}${setCell(uniq,2,'B',sets)}
+        </div>
+      </div>
+      <div class="br-side" style="justify-content:flex-end"><span class="br-name">${B}</span> <span class="pill">B</span></div>
+    </div>`;
   }
 
   function jornadaBlock(title, games, leg, ri){
-    // Filtro por pareja
     const teamFilter = $('#filterTeam')?.value || 'ALL';
-    const filtered = (teamFilter==='ALL') ? games
-      : games.filter(([x,y])=> x===teamFilter || y===teamFilter);
-
+    const filtered = (teamFilter==='ALL') ? games : games.filter(([x,y])=> x===teamFilter || y===teamFilter);
     const gamesSorted = filtered.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
-    const inner = gamesSorted.map((g,idx)=> makeCard(g[0],g[1],leg,ri,idx)).join('');
+    const mode = $('#viewMode')?.value || 'LIST';
+    const inner = gamesSorted.map((g,idx)=> mode==='DIAGRAM'
+        ? makeCardDiagram(g[0],g[1],leg,ri,idx)
+        : makeCardList(g[0],g[1],leg,ri,idx)
+      ).join('');
     return `<details class="round"><summary><h3 class="small" style="display:inline">${title}</h3></summary>${inner || '<div class="small">Sin partidos</div>'}</details>`;
   }
 
@@ -475,7 +529,9 @@
     if(roundFilter!=='ALL'){ const rIndex = Number(roundFilter)-1; mapped = mapped.filter(x=>x.ri===rIndex); }
     const blocks = mapped.map(x=> jornadaBlock('Jornada '+(x.ri+1), x.games, leg, x.ri)).join('');
     return `<div style="min-width:360px; max-width:100%; padding-right:10px">
-      <h2 style="margin:6px 0 10px">${title}</h2>${blocks || '<div class="small">Sin partidos</div>'}</div>`;
+      <h2 style="margin:6px 0 10px">${title}</h2>
+      ${blocks || '<div class="small">Sin partidos</div>'}
+    </div>`;
   }
 
   function renderCards(){
@@ -491,58 +547,53 @@
     </div>`;
     root.innerHTML = html;
 
-    // Auto-avance en inputs del marcador
+    // Auto avance
     bindAutoAdvance(root);
 
-    // Sincronizar fecha desde la card hacia el resumen/lista
+    // Sync fecha
     $$('#cards input[type="date"]').forEach(inp=> inp.addEventListener('change', async function(){
       const uniq = this.id.replace('_date','');
-      const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderMatches(); renderSummary(); }
+      const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderSummary(); }
     }));
   }
 
   function bindAutoAdvance(scope){
-    const inputs = $$('input.setBox', scope);
-    // Orden deseado: A1 -> B1 -> A2 -> B2 -> A3 -> B3
-    const order = [];
-    // construir orden por card
-    const cards = $$('.card', scope);
+    const cards = $$('.card, .br-match', scope);
     cards.forEach(card=>{
-      const cardInputs = [
-        ...card.querySelectorAll('input[id$="_s1a"]'),
-        ...card.querySelectorAll('input[id$="_s1b"]'),
-        ...card.querySelectorAll('input[id$="_s2a"]'),
-        ...card.querySelectorAll('input[id$="_s2b"]'),
-        ...card.querySelectorAll('input[id$="_s3a"]'),
-        ...card.querySelectorAll('input[id$="_s3b"]'),
-      ];
-      order.push(...cardInputs);
-    });
-
-    order.forEach((el,idx)=>{
-      el.addEventListener('input', ()=>{
-        // si ya tiene 1-2 dígitos, saltar al siguiente
-        if(String(el.value).length>=1){
-          const next = order[idx+1];
-          if(next) next.focus();
-        }
-      });
-      el.addEventListener('keydown', (e)=>{
-        if(e.key==='Enter'){
-          e.preventDefault();
-          const next = order[idx+1]; if(next) next.focus();
-        }
-        if(e.key==='ArrowLeft' && el.selectionStart===0){
-          const prev = order[idx-1]; if(prev){ e.preventDefault(); prev.focus(); }
-        }
-        if(e.key==='ArrowRight' && el.selectionStart===String(el.value).length){
-          const next = order[idx+1]; if(next){ e.preventDefault(); next.focus(); }
-        }
+      const inputs = card.querySelectorAll('input[type="number"].setBox');
+      inputs.forEach((el,idx)=>{
+        el.addEventListener('input', ()=>{
+          if(String(el.value).length>=1){
+            const next = inputs[idx+1];
+            if(next) next.focus();
+          }
+        });
+        el.addEventListener('keydown', (e)=>{
+          if(e.key==='Enter'){ e.preventDefault(); const next = inputs[idx+1]; if(next) next.focus(); }
+        });
       });
     });
   }
 
+  // Borrar resultado (limpia sets y fecha localmente y en DB)
+  window.clearCard = async (uniq)=>{
+    if(!canEdit()){ alert('Debes iniciar sesión para editar.'); return; }
+    const rec = state.matches.find(m=>m.uniq===uniq);
+    if(rec){
+      if(supabase){ await supabase.from('matches').delete().eq('uniq', rec.uniq).eq('league_id', LEAGUE_ID); }
+      state.matches = state.matches.filter(m=>m.uniq!==rec.uniq);
+      saveLocal();
+      renderCards(); renderStandings(); renderSummary();
+    }else{
+      // limpiar inputs visibles
+      ['_s1a','_s1b','_s2a','_s2b','_s3a','_s3b','_date'].forEach(s=>{
+        const el = document.getElementById(uniq+s); if(el) el.value='';
+      });
+    }
+  };
+
   window.saveCard = async (a,b,leg,ri,idx)=>{
+    if(!canEdit()){ alert('Debes iniciar sesión para editar.'); return; }
     const pair = [a,b].slice().sort().join('__'); const uniq = `${pair}_${leg}_${ri}_${idx}`;
     const get = id => document.getElementById(id);
     const date = (get(uniq+'_date') && get(uniq+'_date').value) || null;
@@ -562,49 +613,22 @@
     const base = { uniq, A:a, B:b, leg, round:ri+1, sets: vals, ptsA, ptsB, date };
     if(rec){ Object.assign(rec, base); } else { rec = { id: uid(), ...base }; state.matches.push(rec); }
     await upsertMatch(rec);
-    renderMatches(); renderStandings(); renderSummary();
+    renderStandings(); renderSummary();
     try{
-      const det = document.getElementById(uniq+'_date').closest('details.round'); if(det) det.open=false;
-      const sum=$('#summary'); sum&&sum.scrollIntoView({behavior:'smooth'});
+      const el = document.getElementById(uniq+'_date');
+      const det = el?.closest('details.round'); if(det) det.open=false;
+      $('#summary')?.scrollIntoView({behavior:'smooth'});
     }catch{}
   };
 
   async function upsertMatch(rec){
     if(supabase){
       const payload = { league_id: LEAGUE_ID, uniq: rec.uniq, leg: rec.leg, round: rec.round,
-        team_a: rec.A, team_b: rec.B, date: rec.date, wo: false, sets: rec.sets, pts_a: rec.ptsA, pts_b: rec.ptsB };
+        team_a: rec.A, team_b: rec.B, date: rec.date, sets: rec.sets, pts_a: rec.ptsA, pts_b: rec.ptsB };
       const { data, error } = await supabase.from('matches').upsert(payload).select('*').single();
       if(error){ console.warn(error); alert('No se pudo guardar en Supabase'); }
       else { rec.id = data.id; }
     } else saveLocal();
-  }
-
-  window.deleteMatch = async (id)=>{
-    const rec = state.matches.find(m=>m.id===id || m.uniq===id);
-    if(!rec) return;
-    if(!confirm(`¿Eliminar R${rec.round} ${teamName(rec.A)} vs ${teamName(rec.B)}?`)) return;
-    if(supabase){
-      await supabase.from('matches').delete().eq('uniq', rec.uniq).eq('league_id', LEAGUE_ID);
-    }
-    state.matches = state.matches.filter(m=>m.uniq!==rec.uniq);
-    saveLocal();
-    renderMatches(); renderStandings(); renderSummary(); renderCards();
-  };
-
-  function renderMatches(){
-    const root = $('#matches'); if(state.matches.length===0){ root.innerHTML = '<div class="small">Sin partidos</div>'; return; }
-    const fmt = d=>{ if(!d) return ''; const dt=new Date(d); return isNaN(dt)? d : dt.toLocaleDateString(); };
-    root.innerHTML = state.matches.slice().sort((a,b)=> (a.round||0)-(b.round||0) || (a.leg||'ida').localeCompare(b.leg||'ida')).map(m=>{
-      const aN=escapeHtml(teamName(m.A)), bN=escapeHtml(teamName(m.B));
-      const winA = m.ptsA>m.ptsB, winB = m.ptsB>m.ptsA;
-      const aL = winA? '🏅 '+aN : aN; const bL = winB? '🏅 '+bN : bN;
-      const setsTxt = (m.sets||[]).map(ab=> `${(ab[0]||0)}-${(ab[1]||0)}`).join(', ');
-      const when = m.date? ` • <span class="small">${fmt(m.date)}</span>` : '';
-      return `<div class="flex" style="justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border)">
-        <div><div><span class="pill">R${m.round}</span> <strong>${aL}</strong> vs <strong>${bL}</strong>${when}</div><div class="small">Sets: ${setsTxt}</div></div>
-        <div class="actions"><button class="danger" onclick="deleteMatch('${m.id||m.uniq}')">Eliminar</button></div>
-      </div>`;
-    }).join('');
   }
 
   function renderStandings(){
@@ -617,7 +641,7 @@
       if(sA>sB){ stats[A].PG++; stats[B].PP++; } else { stats[B].PG++; stats[A].PP++; }
       stats[A].PTS+=ptsA; stats[B].PTS+=ptsB;
     });
-    // Orden: PG desc, luego GW desc, luego PTS desc (fallback)
+    // Orden preferido: PG desc, luego GW desc, luego PTS desc
     const arr = state.teams.map(t=>stats[t.id]).filter(Boolean)
       .sort((x,y)=> (y.PG-x.PG) || (y.GW-x.GW) || (y.PTS-x.PTS));
     $('#standings tbody').innerHTML = arr.map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(r.name)}</td><td>${r.PJ}</td><td>${r.PG}</td><td>${r.PP}</td><td>${r.GW}</td><td>${r.GL}</td><td>${r.GW-r.GL}</td><td><strong>${(Math.round(r.PTS*10)/10).toFixed(1).replace('.0','')}</strong></td></tr>`).join('')
@@ -638,7 +662,6 @@
       if(!rounds || !rounds.length) return '';
       const cards = rounds.map((games,i)=>{
         if(roundFilter!=='ALL' && i!==Number(roundFilter)-1) return '';
-        // filtro por pareja
         const filtered = (teamFilter==='ALL') ? games : games.filter(([x,y])=> x===teamFilter || y===teamFilter);
         const gamesSorted = filtered.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
         const items = gamesSorted.map((pair,idx)=>{
@@ -660,7 +683,6 @@
               <div class="pm-title">🎾 <span class="pill">A</span> <strong>${labA}</strong> <span style="opacity:.6">|</span>
                 <span class="pill">B</span> <strong>${labB}</strong></div>
               ${chip}
-              <div class="actions" style="justify-content:center; margin-top:6px"><button class="ghost" onclick="openMatch('${uniq}')">Ir al partido</button></div>
             </div>`;
         }).join('');
         return `<div class="sum-card"><h4><span>${title}</span> · Jornada ${i+1}</h4>${items || '<span class="small">(sin partidos)</span>'}</div>`;
@@ -673,20 +695,10 @@
     $$('#summary input[type="date"]').forEach(inp=>{
       inp.addEventListener('change', async function(){
         const uniq = this.id.replace('sum_','');
-        const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderCards(); renderMatches(); }
+        const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderCards(); }
       });
     });
   }
-
-  window.openMatch = function(uniq){
-    try{
-      const el = document.getElementById(uniq+'_date');
-      if(!el){ alert('No encontré la card del partido.'); return; }
-      const det = el.closest('details.round'); if(det) det.open = true;
-      el.scrollIntoView({behavior:'smooth', block:'center'}); el.classList.add('flash');
-      setTimeout(()=> el.classList.remove('flash'), 1200);
-    }catch(e){ console.error(e); }
-  };
 
   function initTabs(){
     const tabs = $$('#mobileTabs button'); const sections = ['#sec-parejas','#sec-cuadros','#sec-resumen','#sec-tabla'].map(s=>$(s));
@@ -695,6 +707,51 @@
     tabs.forEach(btn=> btn.addEventListener('click', ()=> activate(btn.dataset.target)));
     window.addEventListener('resize', ()=>{ if(!isMobile()){ sections.forEach(sec=>sec && sec.classList.add('active')); } });
     if(isMobile()) activate('#sec-cuadros'); else sections.forEach(sec=>sec && sec.classList.add('active'));
+  }
+
+  /* ======= Login con Supabase Auth (Google) ======= */
+  function initAuthUI(){
+    const btnLogin = $('#btnLogin');
+    const btnLogout = $('#btnLogout');
+    const whoami = $('#whoami');
+
+    if(!supabase){ btnLogin.style.display='none'; btnLogout.style.display='none'; return; }
+
+    supabase.auth.getSession().then(({ data })=>{
+      session = data.session;
+      updateAuthUI();
+    });
+
+    supabase.auth.onAuthStateChange((_ev, s)=>{
+      session = s;
+      updateAuthUI();
+    });
+
+    btnLogin.addEventListener('click', async ()=>{
+      const { error } = await supabase.auth.signInWithOAuth({ provider:'google' });
+      if(error) alert('No se pudo iniciar sesión.');
+    });
+    btnLogout.addEventListener('click', async ()=>{
+      await supabase.auth.signOut();
+    });
+
+    function updateAuthUI(){
+      if(session?.user){
+        btnLogin.style.display='none';
+        btnLogout.style.display='';
+        whoami.textContent = '• ' + (session.user.user_metadata?.name || session.user.email);
+      }else{
+        btnLogin.style.display='';
+        btnLogout.style.display='none';
+        whoami.textContent = '';
+      }
+    }
+  }
+
+  function canEdit(){
+    if(!REQUIRE_LOGIN_FOR_EDITS) return true;
+    if(!supabase) return true; // si estás en local, permitir
+    return !!session?.user;
   }
   </script>
 </body>
