@@ -10,25 +10,48 @@
     .wrap{min-height:100svh;display:grid;place-items:center;padding:24px}
     .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;max-width:520px;width:100%;padding:28px;box-shadow:0 6px 28px rgba(16,24,40,.06)}
     h1{margin:0 0 8px} p{margin:0 0 16px;color:var(--muted)}
-    .btn{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
+    .row{display:grid;gap:10px}
+    label{font-weight:600}
+    input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:12px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
     .btn.primary{background:var(--accent);border-color:transparent;color:#0a1b10}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .muted{color:var(--muted);font-size:.9rem}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .link{background:none;border:none;color:#2563eb;padding:0;cursor:pointer;font-weight:700}
+    .error{color:#b91c1c;font-size:.9rem;margin-top:6px}
+    .ok{color:#065f46;font-size:.9rem;margin-top:6px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
       <h1>🏆 Liga Femenina</h1>
-      <p>Inicia sesión para cargar resultados y ver cruces.</p>
+      <p id="modeTitle">Inicia sesión para cargar resultados y ver cruces.</p>
+
       <div class="row" style="margin:8px 0 16px">
-        <button id="btnGoogle" class="btn">
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" height="20" alt="">
-          Iniciar sesión con Google
-        </button>
-        <button id="btnAnon" class="btn">Entrar como visita (solo lectura)</button>
+        <label for="email">Correo</label>
+        <input id="email" type="email" placeholder="tu@email.com" autocomplete="email" required>
+        <label for="password">Contraseña</label>
+        <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" required>
+        <div id="extraFields" style="display:none">
+          <label for="displayName">Nombre para mostrar (opcional)</label>
+          <input id="displayName" type="text" placeholder="Ej. Jessi / Sele">
+        </div>
+        <div class="error" id="err" style="display:none"></div>
+        <div class="ok" id="ok" style="display:none"></div>
       </div>
-      <div class="muted">Serás redirigida a <code>liga.html</code> al completar el acceso.</div>
+
+      <div class="actions" style="margin-top:8px">
+        <button id="btnSubmit" class="btn primary">Entrar</button>
+        <button id="btnToggle" class="btn">Crear cuenta</button>
+      </div>
+
+      <div class="actions" style="margin-top:12px">
+        <button id="btnForgot" class="link">¿Olvidaste tu contraseña?</button>
+        <button id="btnGuest" class="link">Entrar como visita</button>
+      </div>
+
+      <div class="muted" style="margin-top:12px">Serás redirigida a <code>liga.html</code> al completar el acceso.</div>
     </div>
   </div>
 
@@ -38,22 +61,88 @@
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
     const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Redirigir si ya hay sesión
-    const { data:{ session } } = await sb.auth.getSession();
-    if(session){ location.href = 'liga.html'; }
+    const $ = s => document.querySelector(s);
+    const err = $('#err'), ok = $('#ok');
+    const btnSubmit = $('#btnSubmit'), btnToggle = $('#btnToggle');
+    const btnForgot = $('#btnForgot'), btnGuest = $('#btnGuest');
+    const extra = $('#extraFields'), modeTitle = $('#modeTitle');
 
-    document.getElementById('btnGoogle').onclick = async ()=>{
-      const { error } = await sb.auth.signInWithOAuth({
-        provider:'google',
-        options:{ redirectTo: location.origin + '/liga.html' }
-      });
-      if(error) alert('No se pudo iniciar sesión.');
-    };
+    let mode = 'login'; // 'login' | 'signup'
+    init();
 
-    document.getElementById('btnAnon').onclick = ()=>{
-      sessionStorage.setItem('guest','1'); // solo lectura
+    async function init(){
+      const { data:{ session } } = await sb.auth.getSession();
+      if(session){ location.href = 'liga.html'; return; }
+      updateUI();
+    }
+
+    function updateUI(){
+      err.style.display = 'none'; ok.style.display = 'none';
+      if(mode === 'login'){
+        btnSubmit.textContent = 'Entrar';
+        btnToggle.textContent = 'Crear cuenta';
+        modeTitle.textContent = 'Inicia sesión para cargar resultados y ver cruces.';
+        extra.style.display = 'none';
+      }else{
+        btnSubmit.textContent = 'Crear cuenta';
+        btnToggle.textContent = 'Ya tengo cuenta';
+        modeTitle.textContent = 'Crea tu cuenta para participar en la liga.';
+        extra.style.display = 'block';
+      }
+    }
+
+    btnToggle.onclick = () => { mode = (mode==='login') ? 'signup' : 'login'; updateUI(); };
+
+    btnGuest.onclick = ()=>{
+      sessionStorage.setItem('guest','1');
       location.href = 'liga.html';
     };
+
+    btnForgot.onclick = async ()=>{
+      hideMsg();
+      const email = $('#email').value.trim();
+      if(!email){ return showErr('Escribe tu correo para recuperar la contraseña.'); }
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: location.origin + '/liga.html'
+      });
+      if(error) return showErr(error.message || 'No se pudo enviar el email de recuperación.');
+      showOk('Te enviamos un email para restablecer la contraseña.');
+    };
+
+    btnSubmit.onclick = async ()=>{
+      hideMsg();
+      const email = $('#email').value.trim();
+      const password = $('#password').value;
+
+      if(!email || !password) return showErr('Completa email y contraseña.');
+
+      if(mode==='login'){
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if(error) return showErr(error.message || 'Email/contraseña inválidos.');
+        location.href = 'liga.html';
+      }else{
+        const displayName = $('#displayName').value.trim() || null;
+        const { data, error } = await sb.auth.signUp({
+          email, password,
+          options:{
+            data: { display_name: displayName }
+          }
+        });
+        if(error) return showErr(error.message || 'No se pudo crear la cuenta.');
+        // Opcional: crear/actualizar perfil en tabla "profiles"
+        if(data?.user){
+          await sb.from('profiles').upsert({
+            user_id: data.user.id,
+            display_name: displayName
+          });
+        }
+        showOk('Cuenta creada. Revisa tu correo si se requiere confirmación.');
+      }
+    };
+
+    function showErr(m){ err.textContent = m; err.style.display='block'; }
+    function showOk(m){ ok.textContent = m; ok.style.display='block'; }
+    function hideMsg(){ err.style.display='none'; ok.style.display='none'; }
   </script>
 </body>
 </html>
