@@ -74,7 +74,13 @@
     details.cruces>summary{ cursor:pointer; list-style:none; font-weight:700 }
     details.cruces>summary::-webkit-details-marker{ display:none }
 
-    /* ======= CRUCES: carriles (estilo llave simple) ======= */
+    /* ======= CRUCES: lista simple (solo lectura) ======= */
+    .fixture-list .fx-item{
+      padding:6px 10px; border-bottom:1px solid var(--border); font-size:.95rem;
+    }
+    .fixture-list .fx-item:last-child{ border-bottom:0 }
+
+    /* ======= JUEGOS: carriles (estilo llave simple) ======= */
     .lanes{
       display:grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -124,7 +130,7 @@
       display:grid; grid-template-columns: minmax(140px,1fr) repeat(3,64px); gap:8px; align-items:center;
     }
     .row-score + .row-score{ border-top:1px solid var(--border); padding-top:8px; margin-top:8px }
-    .player-name{ font-weight:600; line-height:1.2; white-space:normal } /* nombres completos, sin corte */
+    .player-name{ font-weight:600; line-height:1.2; white-space:normal } /* nombres completos */
     .setBox{
       width:64px; height:56px; border:1px solid var(--border); border-radius:10px;
       font-size:26px; text-align:center; font-weight:700;
@@ -150,10 +156,7 @@
         <h1>🏆 Liga Femenina – <span style="color:#10b981">No puedo, tengo pádel</span></h1>
         <div class="small">Supabase + caché local. Cruces ida/vuelta, resultados y tabla.</div>
       </div>
-      <div class="actions">
-        <button id="btnPing" class="ghost">🔍 Probar conexión</button>
-        <div class="pill" id="connBadge">🔌 Local</div>
-      </div>
+      <div class="pill" id="connBadge">🔌 Local</div>
     </header>
 
     <nav class="actions" id="topFilters" style="margin-bottom:6px">
@@ -165,7 +168,7 @@
 
     <!-- PAREJAS (COLAPSABLE) -->
     <section id="sec-parejas" class="grid">
-      <div class="card togglable" id="pairsCard">
+      <div class="card togglable is-collapsed" id="pairsCard">
         <div class="hd">
           <strong>👥 Parejas / Jugadoras</strong>
           <div class="actions">
@@ -180,20 +183,41 @@
       </div>
     </section>
 
-    <!-- CRUCES (IDA y VUELTA, SIN JORNADAS) -->
+    <!-- CRUCES (SOLO LECTURA) -->
     <section id="sec-cruces" class="grid">
-      <div class="card togglable" id="crucesCard">
+      <div class="card togglable is-collapsed" id="fixtureCard">
         <div class="hd">
-          <strong>🎾 Cruces</strong>
+          <strong>🎾 Cruces (Fixture)</strong>
+          <div class="small">Vista solo lectura</div>
+        </div>
+        <div class="bd">
+          <details class="cruces" id="fx-ida">
+            <summary>IDA</summary>
+            <div class="fixture-list" id="fixture-ida"></div>
+          </details>
+
+          <details class="cruces" id="fx-vuelta" style="margin-top:12px">
+            <summary>VUELTA</summary>
+            <div class="fixture-list" id="fixture-vuelta"></div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- JUEGOS (CARGA DE RESULTADOS) -->
+    <section id="sec-juegos" class="grid">
+      <div class="card togglable is-collapsed" id="gamesCard">
+        <div class="hd">
+          <strong>📝 Juegos (cargar resultados)</strong>
           <div class="small" id="fixtureInfo"></div>
         </div>
         <div class="bd">
-          <details class="cruces" id="block-ida" open>
+          <details class="cruces" id="block-ida">
             <summary>IDA</summary>
             <div class="lanes" id="lanes-ida"></div>
           </details>
 
-          <details class="cruces" id="block-vuelta" style="margin-top:12px" open>
+          <details class="cruces" id="block-vuelta" style="margin-top:12px">
             <summary>VUELTA</summary>
             <div class="lanes" id="lanes-vuelta"></div>
           </details>
@@ -201,7 +225,7 @@
       </div>
     </section>
 
-    <!-- TABLA -->
+    <!-- TABLA (NO COLAPSABLE) -->
     <section id="sec-tabla" class="grid">
       <div class="card">
         <div class="hd">
@@ -318,24 +342,38 @@
 
     renderTeams();
     populateTeamFilters();
-    renderAllMatches(); // ida+vuelta
+
+    // Render fixture (solo lectura)
+    renderFixtureOnly('#fixture-ida', state.fixtures.ida);
+    renderFixtureOnly('#fixture-vuelta', state.fixtures.vuelta);
+
+    // Render juegos (con inputs)
+    renderAllMatches();
+
+    // Tabla
     renderStandings();
   }
 
   function bindUI(){
-    // toggle cards (parejas + cruces)
+    // toggle cards (parejas + cruces + juegos)
     $('#pairsCard .hd').addEventListener('click', ()=>{
       $('#pairsCard').classList.toggle('is-collapsed');
       localStorage.setItem('pairsCollapsed', String($('#pairsCard').classList.contains('is-collapsed')));
     });
-    $('#crucesCard .hd').addEventListener('click', ()=>{
-      $('#crucesCard').classList.toggle('is-collapsed');
-      localStorage.setItem('crucesCollapsed', String($('#crucesCard').classList.contains('is-collapsed')));
+    $('#fixtureCard .hd').addEventListener('click', ()=>{
+      $('#fixtureCard').classList.toggle('is-collapsed');
+      localStorage.setItem('fixtureCollapsed', String($('#fixtureCard').classList.contains('is-collapsed')));
+    });
+    $('#gamesCard .hd').addEventListener('click', ()=>{
+      $('#gamesCard').classList.toggle('is-collapsed');
+      localStorage.setItem('gamesCollapsed', String($('#gamesCard').classList.contains('is-collapsed')));
     });
 
-    // detalles ida/vuelta (persisten abiertos/cerrados)
-    $('#block-ida').addEventListener('toggle', ()=> localStorage.setItem('cruceIdaOpen', String($('#block-ida').open)));
-    $('#block-vuelta').addEventListener('toggle', ()=> localStorage.setItem('cruceVueltaOpen', String($('#block-vuelta').open)));
+    // details abiertos/cerrados (persisten)
+    $('#fx-ida').addEventListener('toggle', ()=> localStorage.setItem('fxIdaOpen', String($('#fx-ida').open)));
+    $('#fx-vuelta').addEventListener('toggle', ()=> localStorage.setItem('fxVueltaOpen', String($('#fx-vuelta').open)));
+    $('#block-ida').addEventListener('toggle', ()=> localStorage.setItem('jgIdaOpen', String($('#block-ida').open)));
+    $('#block-vuelta').addEventListener('toggle', ()=> localStorage.setItem('jgVueltaOpen', String($('#block-vuelta').open)));
 
     $('#addPair').addEventListener('click', onAddTeam);
     $('#reloadAll').addEventListener('click', reloadAll);
@@ -343,6 +381,8 @@
       const ids = state.teams.map(t=>t.id);
       state.fixtures.ida = buildRoundRobin(ids);
       state.fixtures.vuelta = state.fixtures.ida.map(r=> r.map(p=>[p[1],p[0]]));
+      renderFixtureOnly('#fixture-ida', state.fixtures.ida);
+      renderFixtureOnly('#fixture-vuelta', state.fixtures.vuelta);
       renderAllMatches();
     });
     $('#filterTeam').addEventListener('change', renderAllMatches);
@@ -352,41 +392,22 @@
         location.reload();
       }
     });
-
-    // Botón de prueba de conexión
-    $('#btnPing').addEventListener('click', testConnection);
   }
 
-  // Visibilidad por defecto: ABIERTAS en primera carga
   function restoreCollapsers(){
+    // cards -> por defecto colapsadas
     const pc = localStorage.getItem('pairsCollapsed');
-    if(pc === 'true') $('#pairsCard').classList.add('is-collapsed'); else $('#pairsCard').classList.remove('is-collapsed');
-    const cc = localStorage.getItem('crucesCollapsed');
-    if(cc === 'true') $('#crucesCard').classList.add('is-collapsed'); else $('#crucesCard').classList.remove('is-collapsed');
+    if(pc===null || pc==='true') $('#pairsCard').classList.add('is-collapsed'); else $('#pairsCard').classList.remove('is-collapsed');
+    const fc = localStorage.getItem('fixtureCollapsed');
+    if(fc===null || fc==='true') $('#fixtureCard').classList.add('is-collapsed'); else $('#fixtureCard').classList.remove('is-collapsed');
+    const gc = localStorage.getItem('gamesCollapsed');
+    if(gc===null || gc==='true') $('#gamesCard').classList.add('is-collapsed'); else $('#gamesCard').classList.remove('is-collapsed');
 
-    // details: por defecto abiertas si no se guardó preferencia
-    const idaOpen = localStorage.getItem('cruceIdaOpen');
-    const vtaOpen = localStorage.getItem('cruceVueltaOpen');
-    if(idaOpen !== null) $('#block-ida').open = (idaOpen === 'true');
-    if(vtaOpen !== null) $('#block-vuelta').open = (vtaOpen === 'true');
-  }
-
-  async function testConnection(){
-    if(!supabase){
-      $('#connBadge').textContent = '🔌 Local (sin cliente)';
-      return;
-    }
-    try{
-      $('#connBadge').textContent = '⏳ Probando...';
-      const { data, error } = await supabase.from('teams').select('id', { count:'exact', head:true }).eq('league_id', LEAGUE_ID);
-      if(error) throw error;
-      const count = (data && data.length) ? data.length : (typeof data === 'number' ? data : null);
-      $('#connBadge').textContent = `🌐 Supabase (teams: ${count ?? 'ok'})`;
-    }catch(e){
-      console.warn(e);
-      $('#connBadge').textContent = '⚠️ Error conexión';
-      alert('No se pudo conectar a Supabase. Revisa URL/Key o CORS del proyecto.');
-    }
+    // details (default cerrados)
+    $('#fx-ida').open = localStorage.getItem('fxIdaOpen')==='true';
+    $('#fx-vuelta').open = localStorage.getItem('fxVueltaOpen')==='true';
+    $('#block-ida').open = localStorage.getItem('jgIdaOpen')==='true';
+    $('#block-vuelta').open = localStorage.getItem('jgVueltaOpen')==='true';
   }
 
   async function onAddTeam(){
@@ -452,6 +473,17 @@
     if(ft) ft.innerHTML = opts;
   }
 
+  /* ======= FIXTURE SOLO LECTURA ======= */
+  function renderFixtureOnly(container, rounds){
+    let html = '';
+    rounds.forEach(r=>{
+      r.forEach(([a,b])=>{
+        html += `<div class="fx-item">${escapeHtml(teamName(a))} <b>vs</b> ${escapeHtml(teamName(b))}</div>`;
+      });
+    });
+    $(container).innerHTML = html || '<div class="small">(sin cruces)</div>';
+  }
+
   /* ======= inputs ======= */
   function makeSetInput(uniq,i,side,sets){
     const val = (sets[i] && sets[i][side==='A'?0:1]) || '';
@@ -496,7 +528,7 @@
     </div>`;
   }
 
-  // ======= render por carriles =======
+  // ======= render por carriles (JUEGOS) =======
   function renderLeg(containerSelector, rounds, leg){
     const root = document.querySelector(containerSelector);
     const teamFilter = $('#filterTeam')?.value || 'ALL';
