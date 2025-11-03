@@ -43,6 +43,10 @@
       border-bottom:1px solid var(--border);
     }
     .card .bd{ padding:14px 16px }
+    /* colapsables de card */
+    .card.togglable .hd{ cursor:pointer }
+    .card.is-collapsed .bd{ display:none }
+
     .pill{
       display:inline-flex; gap:.5rem; align-items:center;
       padding:.35rem .7rem; border-radius:999px; background:var(--chip);
@@ -65,27 +69,47 @@
     #teamList .row{display:flex; gap:8px; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px dashed var(--border)}
     #teamList .row:last-child{border-bottom:0}
 
-    /* ======= CRUCES: estilo llave simple ======= */
+    /* ======= CRUCES: shell colapsable ======= */
     details.cruces{ border:1px dashed var(--border); border-radius:12px; padding:8px 10px; background:#fff }
     details.cruces>summary{ cursor:pointer; list-style:none; font-weight:700 }
     details.cruces>summary::-webkit-details-marker{ display:none }
 
-    .bracket{
-      display:grid; gap:12px;
+    /* ======= CRUCES: carriles (estilo llave simple) ======= */
+    .lanes{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap:14px;
     }
+    .lane{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      padding:10px 0 10px 0;
+      position:relative;
+    }
+    .lane-title{
+      font-weight:700; padding:6px 12px 8px 12px; border-bottom:1px solid var(--border);
+    }
+    .lane-body{
+      position:relative; padding:10px 8px 4px 28px; /* espacio para la espina */
+    }
+    .lane-body::before{
+      content:""; position:absolute; left:16px; top:10px; bottom:10px;
+      width:2px; background:var(--line);
+      border-radius:2px;
+    }
+
     .match{
       position:relative;
       border:1px solid var(--border);
       border-radius:12px;
       padding:12px;
       background:#fff;
+      margin:10px 8px;
     }
-    /* efecto “línea de llave” a la izquierda */
-    .match::before{
-      content:"";
-      position:absolute;
-      left:-12px; top:12px; bottom:12px;
-      width:4px; border-left:2px solid var(--line); border-radius:2px;
+    .lane .match::before{
+      content:""; position:absolute; left:-12px; top:22px; width:12px; height:2px;
+      background:var(--line); border-radius:2px;
     }
 
     .mh{
@@ -95,9 +119,7 @@
     .mh .btns{ display:flex; gap:8px; align-items:center; margin-left:auto }
     .mh input[type="date"]{ width:auto; min-width:140px }
 
-    .score{
-      display:grid; gap:8px;
-    }
+    .score{ display:grid; gap:8px; }
     .row-score{
       display:grid; grid-template-columns: minmax(140px,1fr) repeat(3,64px); gap:8px; align-items:center;
     }
@@ -138,9 +160,9 @@
       <button id="regenFixture" class="ghost">🔄 Regenerar cruces</button>
     </nav>
 
-    <!-- PAREJAS (SIEMPRE VISIBLE) -->
+    <!-- PAREJAS (COLAPSABLE) -->
     <section id="sec-parejas" class="grid">
-      <div class="card">
+      <div class="card togglable is-collapsed" id="pairsCard">
         <div class="hd">
           <strong>👥 Parejas / Jugadoras</strong>
           <div class="actions">
@@ -157,20 +179,20 @@
 
     <!-- CRUCES (IDA y VUELTA, SIN JORNADAS) -->
     <section id="sec-cruces" class="grid">
-      <div class="card">
+      <div class="card togglable is-collapsed" id="crucesCard">
         <div class="hd">
           <strong>🎾 Cruces</strong>
           <div class="small" id="fixtureInfo"></div>
         </div>
         <div class="bd">
-          <details class="cruces" open id="block-ida">
+          <details class="cruces" id="block-ida">
             <summary>IDA</summary>
-            <div class="bracket" id="bracket-ida"></div>
+            <div class="lanes" id="lanes-ida"></div>
           </details>
 
           <details class="cruces" id="block-vuelta" style="margin-top:12px">
             <summary>VUELTA</summary>
-            <div class="bracket" id="bracket-vuelta"></div>
+            <div class="lanes" id="lanes-vuelta"></div>
           </details>
         </div>
       </div>
@@ -227,6 +249,7 @@
 
   init();
   async function init(){
+    restoreCollapsers();
     await reloadAll();
     bindUI();
   }
@@ -241,6 +264,11 @@
   function orderPair(a,b){ const ia=indexOfTeam(a), ib=indexOfTeam(b); return (ia<=ib)? [a,b] : [b,a]; }
   function pairRank(a,b){ const [x,y]=orderPair(a,b); return [indexOfTeam(x), indexOfTeam(y)]; }
   function comparePairs(p1a,p1b,p2a,p2b){ const r1=pairRank(p1a,p1b), r2=pairRank(p2a,p2b); if(r1[0]!==r2[0]) return r1[0]-r2[0]; return r1[1]-r2[1]; }
+
+  // ======= helpers para carriles / “semillas” =======
+  function seedIndex(id){ return state.teams.findIndex(t=>t.id===id); }
+  function laneKey(a,b){ return Math.min(seedIndex(a), seedIndex(b)); } // por semilla mínima
+  function laneTitleFromKey(key){ return `Semillas ${key+1}–${key+2}`; }
 
   function buildRoundRobin(ids){
     const arr = ids.slice(); if(arr.length%2===1) arr.push('BYE'); const n = arr.length; const rounds=[];
@@ -292,6 +320,20 @@
   }
 
   function bindUI(){
+    // toggle cards (parejas + cruces)
+    $('#pairsCard .hd').addEventListener('click', ()=>{
+      $('#pairsCard').classList.toggle('is-collapsed');
+      localStorage.setItem('pairsCollapsed', String($('#pairsCard').classList.contains('is-collapsed')));
+    });
+    $('#crucesCard .hd').addEventListener('click', ()=>{
+      $('#crucesCard').classList.toggle('is-collapsed');
+      localStorage.setItem('crucesCollapsed', String($('#crucesCard').classList.contains('is-collapsed')));
+    });
+
+    // detalles ida/vuelta (persisten abiertos/cerrados)
+    $('#block-ida').addEventListener('toggle', ()=> localStorage.setItem('cruceIdaOpen', String($('#block-ida').open)));
+    $('#block-vuelta').addEventListener('toggle', ()=> localStorage.setItem('cruceVueltaOpen', String($('#block-vuelta').open)));
+
     $('#addPair').addEventListener('click', onAddTeam);
     $('#reloadAll').addEventListener('click', reloadAll);
     $('#regenFixture').addEventListener('click', ()=>{
@@ -307,6 +349,19 @@
         location.reload();
       }
     });
+  }
+
+  function restoreCollapsers(){
+    // cards
+    const pc = localStorage.getItem('pairsCollapsed');
+    if(pc===null || pc==='true') $('#pairsCard').classList.add('is-collapsed'); else $('#pairsCard').classList.remove('is-collapsed');
+    const cc = localStorage.getItem('crucesCollapsed');
+    if(cc===null || cc==='true') $('#crucesCard').classList.add('is-collapsed'); else $('#crucesCard').classList.remove('is-collapsed');
+    // details
+    const idaOpen = localStorage.getItem('cruceIdaOpen')==='true';
+    const vtaOpen = localStorage.getItem('cruceVueltaOpen')==='true';
+    $('#block-ida').open = idaOpen;
+    $('#block-vuelta').open = vtaOpen;
   }
 
   async function onAddTeam(){
@@ -372,12 +427,7 @@
     if(ft) ft.innerHTML = opts;
   }
 
-  // ======= RENDER CRUCES (sin jornadas) =======
-  function flattenFixtures(rounds){
-    // rounds: array de jornadas, cada una: array de [a,b]
-    return rounds.flat();
-  }
-
+  /* ======= inputs ======= */
   function makeSetInput(uniq,i,side,sets){
     const val = (sets[i] && sets[i][side==='A'?0:1]) || '';
     const id  = `${uniq}_s${i+1}${side.toLowerCase()}`;
@@ -387,7 +437,6 @@
   function matchCard(a,b,leg,roundIndex,idxInRound){
     const ia=indexOfTeam(a), ib=indexOfTeam(b); const aId= (ia<=ib)? a:b, bId=(ia<=ib)? b:a;
     const A = escapeHtml(teamName(aId)); const B = escapeHtml(teamName(bId));
-    // uniq conserva round e índice original para no romper referencias si regeneras
     const uniq = [aId,bId].slice().sort().join('__')+'_'+leg+'_'+roundIndex+'_'+idxInRound;
     const existing = state.matches.find(m=>m.uniq===uniq) || {};
     const sets = existing.sets || [];
@@ -422,32 +471,52 @@
     </div>`;
   }
 
-  function renderLeg(containerId, rounds, leg){
-    const root = $(containerId);
+  // ======= render por carriles =======
+  function renderLeg(containerSelector, rounds, leg){
+    const root = document.querySelector(containerSelector);
     const teamFilter = $('#filterTeam')?.value || 'ALL';
 
-    // Construimos una lista estable con (roundIndex, idxInRound, [a,b])
+    // lista estable con (ri, idx, g=[a,b])
     const list = rounds.map((games,ri)=> games.map((g,idx)=>({ri,idx,g}))).flat();
 
-    // Filtro por pareja
+    // filtro por pareja
     const filtered = (teamFilter==='ALL') ? list
       : list.filter(({g:[x,y]})=> x===teamFilter || y===teamFilter);
 
-    // Orden “tipo bracket”: por rank de parejas (no por jornada)
-    filtered.sort((m1,m2)=>{
-      const [a1,b1]=m1.g, [a2,b2]=m2.g;
-      return comparePairs(a1,b1,a2,b2);
+    // agrupar por carril según “semilla mínima”
+    const lanesMap = new Map();
+    filtered.forEach(item=>{
+      const [a,b] = item.g;
+      const key = laneKey(a,b);
+      if(!lanesMap.has(key)) lanesMap.set(key, []);
+      lanesMap.get(key).push(item);
     });
 
-    root.innerHTML = filtered.map(({ri,idx,g})=> matchCard(g[0],g[1],leg,ri,idx)).join('') || '<div class="small">(sin partidos)</div>';
+    const laneKeys = Array.from(lanesMap.keys()).sort((x,y)=> x-y);
 
-    // listeners de fecha
-    $$('#'+root.id+' input[type="date"]').forEach(inp=> inp.addEventListener('change', async function(){
-      const uniq = this.id.replace('_date','');
-      const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderStandings(); }
-    }));
+    const lanesHTML = laneKeys.map(k=>{
+      const items = lanesMap.get(k).sort((m1,m2)=>{
+        const [a1,b1]=m1.g, [a2,b2]=m2.g;
+        return comparePairs(a1,b1,a2,b2);
+      });
+      const body = items.map(({ri,idx,g})=> matchCard(g[0],g[1],leg,ri,idx)).join('') || '<div class="small">(sin partidos)</div>';
+      return `<div class="lane">
+        <div class="lane-title">${laneTitleFromKey(k)}</div>
+        <div class="lane-body">${body}</div>
+      </div>`;
+    }).join('');
 
-    // auto-avance inputs (por card)
+    root.innerHTML = lanesHTML || '<div class="small">(sin partidos)</div>';
+
+    // listeners fecha
+    $$(`${containerSelector} input[type="date"]`).forEach(inp=>{
+      inp.addEventListener('change', async function(){
+        const uniq = this.id.replace('_date','');
+        const rec = state.matches.find(x=>x.uniq===uniq);
+        if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderStandings(); }
+      });
+    });
+
     bindAutoAdvance(root);
   }
 
@@ -455,12 +524,11 @@
     const ida = state.fixtures.ida||[]; const vuelta = state.fixtures.vuelta||[];
     const nTeams = state.teams.length; const perLeg = nTeams*(nTeams-1)/2;
     $('#fixtureInfo').textContent = `Parejas: ${nTeams} · Partidos por fase: ${perLeg}`;
-    renderLeg('#bracket-ida', ida, 'ida');
-    renderLeg('#bracket-vuelta', vuelta, 'vuelta');
+    renderLeg('#lanes-ida', ida, 'ida');
+    renderLeg('#lanes-vuelta', vuelta, 'vuelta');
   }
 
   function bindAutoAdvance(scope){
-    // Por cada .match, crear el orden A1->B1->A2->B2->A3->B3
     $$('.match', scope).forEach(card=>{
       const order = [
         ...card.querySelectorAll('input[id$="_s1a"]'),
@@ -498,7 +566,6 @@
 
     if(vals.length<2){ alert('Carga al menos dos sets'); return; }
 
-    // ganador por sets; sin 0.5 al perdedor
     const sw = vals.reduce((acc,ab)=>{ if(ab[0]>ab[1]) acc.a++; else if(ab[1]>ab[0]) acc.b++; return acc; }, {a:0,b:0});
     if(sw.a===sw.b && vals.length<3){ alert('Empate a sets, falta el 3er set'); return; }
 
@@ -516,7 +583,6 @@
     const rec = state.matches.find(m=>m.uniq===uniq);
     if(!rec) return;
     if(!confirm('¿Borrar el resultado de este partido?')) return;
-    // borrar en Supabase y en estado
     if(supabase){
       await supabase.from('matches').delete().eq('uniq', rec.uniq).eq('league_id', LEAGUE_ID);
     }
@@ -542,7 +608,6 @@
     state.matches.forEach(m=>{
       const {A,B,sets,ptsA,ptsB} = m; if(!stats[A]||!stats[B]) return;
       stats[A].PJ++; stats[B].PJ++;
-      // sets y games
       let sA=0,sB=0, gA=0,gB=0;
       sets.forEach(ab=>{ const a=ab[0]||0, b=ab[1]||0; if(a>b) sA++; else if(b>a) sB++; gA+=a; gB+=b; });
       stats[A].GW+=gA; stats[A].GL+=gB; stats[B].GW+=gB; stats[B].GL+=gA;
