@@ -45,8 +45,12 @@ details.cruces>summary::-webkit-details-marker{display:none}
 .fx-card b{display:block;margin:6px 0}
 
 /* Juegos (cargar resultados) */
-.lanes{display:grid;gap:12px}
+.lanes{display:grid;gap:12px;grid-template-columns:repeat(2, minmax(0,1fr))}
+@media (max-width:720px){.lanes{grid-template-columns:1fr}}
 .match{position:relative;border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.03)}
+.mh{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:6px}
+.mh .date{display:flex;gap:8px;align-items:center}
+.mh input[type="date"]{width:auto;min-width:140px}
 .row-score{display:grid;grid-template-columns:minmax(140px,1fr) 56px 56px 56px;gap:8px;align-items:center;margin-top:6px}
 .setBox{width:56px;height:48px;border:1px solid var(--border);border-radius:10px;font-size:22px;text-align:center;font-weight:700}
 @media (max-width:640px){.row-score{grid-template-columns:minmax(120px,1fr) 52px 52px 52px}.setBox{width:52px;height:46px;font-size:20px}}
@@ -149,14 +153,8 @@ let fixture = { ida: [], vuelta: [] };
 init();
 
 async function init(){
-  restoreCollapsers();
   await loadAll();
   bindUI();
-}
-
-function restoreCollapsers(){
-  // Colapsados por defecto (como pediste)
-  // Si deseas persistir estado, aquí puedes usar localStorage.
 }
 
 /* ====== LOAD ====== */
@@ -186,7 +184,7 @@ async function loadAll(){
     renderStandings();
   }catch(e){
     console.error('Error cargando Supabase:', e);
-    alert('No se pudieron cargar datos de Supabase. Revisa consola/RLS.');
+    alert('No se pudieron cargar datos de Supabase. Revisar credenciales/RLS.');
   }
 }
 
@@ -223,9 +221,7 @@ function renderTeams(){
   $('#teamList').innerHTML = teams.map((t,i)=>`
     <div class="row">
       <div style="flex:1 1 auto"><strong>${escape(t.name)}</strong> <span class="small">· #${i+1}</span></div>
-      <div class="actions" style="flex:0 0 auto">
-        <!-- En esta versión no movemos/insertamos, solo mostramos -->
-      </div>
+      <div class="actions" style="flex:0 0 auto"></div>
     </div>`).join('') || '<span class="small">Sin parejas</span>';
 }
 
@@ -241,7 +237,6 @@ function renderFixture(){
   const nTeams = teams.length;
   const perLeg = nTeams*(nTeams-1)/2;
   $('#fixtureInfo').textContent = `Parejas: ${nTeams} · Partidos por fase: ${perLeg}`;
-
   $('#fixture-ida').innerHTML = ida.map(([a,b])=> fxCard(a,b)).join('') || '<div class="small">(sin cruces)</div>';
   $('#fixture-vuelta').innerHTML = vuelta.map(([a,b])=> fxCard(a,b)).join('') || '<div class="small">(sin cruces)</div>';
 }
@@ -263,12 +258,12 @@ function renderLeg(container, rounds, leg){
 
   root.innerHTML = filtered.map(({ri,idx,g:[a,b]})=> matchCard(a,b,leg,ri,idx)).join('') || '<div class="small">(sin partidos)</div>';
 
-  // Auto-avance/foco por tarjeta: A1→A2→A3→B1→B2→B3
+  // Auto-avance/foco por set: A1→B1→A2→B2→A3→B3
   bindAutoAdvance(root);
 }
 
 function matchCard(a,b,leg,ri,idx){
-  // ordenar ids para uniq estable
+  // IDs ordenados para uniq estable (no rompe si re-ordenas nombres)
   const ia = teams.findIndex(t=>t.id===a);
   const ib = teams.findIndex(t=>t.id===b);
   const aId = (ia<=ib)? a : b;
@@ -279,6 +274,7 @@ function matchCard(a,b,leg,ri,idx){
 
   const rec = matches.find(m=>m.uniq===uniq);
   const getVal = (s, p) => (rec && rec.sets && rec.sets[s] ? (rec.sets[s][p] ?? '') : '');
+  const dateVal = rec?.date ? toDate(rec.date) : '';
 
   const input = (s, side) => {
     const p = side === 'a' ? 0 : 1;
@@ -287,7 +283,13 @@ function matchCard(a,b,leg,ri,idx){
   };
 
   return `<div class="match">
-    <div class="small"><b>${Aname}</b> vs <b>${Bname}</b></div>
+    <div class="mh">
+      <div class="small"><b>${Aname}</b> vs <b>${Bname}</b></div>
+      <div class="date">
+        <span class="small">📅</span>
+        <input id="${uniq}_date" type="date" value="${dateVal}">
+      </div>
+    </div>
     <!-- Fila A: A1, A2, A3 -->
     <div class="row-score">
       <span>${Aname}</span>
@@ -312,23 +314,23 @@ function matchCard(a,b,leg,ri,idx){
 function bindAutoAdvance(scope){
   const cards = scope.querySelectorAll('.match');
   cards.forEach(card=>{
-    const firstInput = card.querySelector('input.setBox');
-    // calcular prefijo uniq de esta tarjeta a partir del primer input
-    const ids = Array.from(card.querySelectorAll('input.setBox')).map(x=>x.id);
-    if(ids.length===0) return;
-    const uniqPrefix = ids[0].split('_s')[0];
+    // obtener uniq de la primera caja
+    const first = card.querySelector('input.setBox');
+    if(!first) return;
+    const uniq = first.id.split('_s')[0];
 
-    // Orden requerido: A1, A2, A3, B1, B2, B3
+    // Secuencia por SET: A1→B1→A2→B2→A3→B3
     const seqIds = [
-      `${uniqPrefix}_s1a`, `${uniqPrefix}_s2a`, `${uniqPrefix}_s3a`,
-      `${uniqPrefix}_s1b`, `${uniqPrefix}_s2b`, `${uniqPrefix}_s3b`,
+      `${uniq}_s1a`, `${uniq}_s1b`,
+      `${uniq}_s2a`, `${uniq}_s2b`,
+      `${uniq}_s3a`, `${uniq}_s3b`,
     ];
-    const seq = seqIds.map(id => card.querySelector(`#${CSS.escape(id)}`)).filter(Boolean);
+    const seq = seqIds.map(id=> card.querySelector(`#${CSS.escape(id)}`)).filter(Boolean);
 
-    // foco inicial en A1
-    if (firstInput) firstInput.focus();
+    // foco en A1
+    seq[0]?.focus();
 
-    seq.forEach((el, i) => {
+    seq.forEach((el,i)=>{
       el.addEventListener('input', ()=>{
         if(String(el.value).length>=1){
           const next = seq[i+1];
@@ -337,6 +339,8 @@ function bindAutoAdvance(scope){
       });
       el.addEventListener('keydown', (e)=>{
         if(e.key==='Enter'){ e.preventDefault(); const next = seq[i+1]; if(next) next.focus(); }
+        if(e.key==='ArrowUp'){ const prev = seq[i-2] ?? seq[i-1]; if(prev){ e.preventDefault(); prev.focus(); } }
+        if(e.key==='ArrowDown'){ const next = seq[i+1]; if(next){ e.preventDefault(); next.focus(); } }
         if(e.key==='ArrowLeft' && el.selectionStart===0){ const prev = seq[i-1]; if(prev){ e.preventDefault(); prev.focus(); } }
         if(e.key==='ArrowRight' && el.selectionStart===String(el.value).length){ const next = seq[i+1]; if(next){ e.preventDefault(); next.focus(); } }
       });
@@ -345,17 +349,14 @@ function bindAutoAdvance(scope){
 }
 
 window.saveMatch = async(uniq,a,b,leg,ri,idx)=>{
-  // leer por IDs: A1,A2,A3,B1,B2,B3
+  // Leer A1..B3 + fecha
   const gv = id => Number(document.getElementById(id)?.value || 0);
-  const A1 = gv(`${uniq}_s1a`);
-  const A2 = gv(`${uniq}_s2a`);
-  const A3 = gv(`${uniq}_s3a`);
-  const B1 = gv(`${uniq}_s1b`);
-  const B2 = gv(`${uniq}_s2b`);
-  const B3 = gv(`${uniq}_s3b`);
+  const A1 = gv(`${uniq}_s1a`), B1 = gv(`${uniq}_s1b`);
+  const A2 = gv(`${uniq}_s2a`), B2 = gv(`${uniq}_s2b`);
+  const A3 = gv(`${uniq}_s3a`), B3 = gv(`${uniq}_s3b`);
+  const dateVal = document.getElementById(`${uniq}_date`)?.value || null;
 
-  const raw = [[A1,B1],[A2,B2],[A3,B3]];
-  const sets = raw.filter(([x,y])=> x>0 || y>0);
+  const sets = [[A1,B1],[A2,B2],[A3,B3]].filter(([x,y])=> x>0 || y>0);
 
   if(sets.length<2){ alert('Carga al menos dos sets'); return; }
   let sa=0,sb=0; sets.forEach(([x,y])=>{ if(x>y) sa++; else if(y>x) sb++; });
@@ -367,7 +368,7 @@ window.saveMatch = async(uniq,a,b,leg,ri,idx)=>{
   const payload = {
     league_id: LEAGUE_ID, uniq,
     leg, round: ri+1, team_a:a, team_b:b,
-    sets, pts_a, pts_b
+    sets, pts_a, pts_b, date: dateVal || null
   };
   const { error } = await sb.from('matches').upsert(payload).select('*').single();
   if(error){ console.error('upsert error', error); alert('No se pudo guardar el partido'); return; }
@@ -407,6 +408,7 @@ function renderStandings(){
 /* ====== utils ====== */
 function nm(id){ return teams.find(t=>t.id===id)?.name || '¿?'; }
 function escape(s){ return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]||ch)); }
+function toDate(v){ try{ const d=new Date(v); if(!isNaN(d)) return d.toISOString().slice(0,10); if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; }catch{} return ''; }
 </script>
 </body>
 </html>
