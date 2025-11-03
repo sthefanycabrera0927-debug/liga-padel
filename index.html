@@ -1,3 +1,147 @@
+function matchCard(a,b,leg,ri,idx){
+  const ia = indexOfTeam(a), ib = indexOfTeam(b);
+  const aId = (ia <= ib) ? a : b, bId = (ia <= ib) ? b : a;
+  const A = escapeHtml(teamName(aId)), B = escapeHtml(teamName(bId));
+
+  // Formato de uniq respetando tu esquema original
+  const uniq = [aId,bId].slice().sort().join('__') + '_' + leg + '_' + ri + '_' + idx;
+
+  // Buscar si ya existe en Supabase para precargar valores
+  const existing = state && state.matches ? state.matches.find(m=>m.uniq===uniq) : null;
+  const sets = (existing && Array.isArray(existing.sets)) ? existing.sets : [];
+
+  const val = (s, side) => (sets[s] && sets[s][side]) || '';
+
+  const input = (setIdx, sideLetter) => {
+    const sideIdx = (sideLetter === 'a') ? 0 : 1;
+    const v = val(setIdx, sideIdx);
+    const id = `${uniq}_s${setIdx+1}${sideLetter}`;
+    return `<input class="setBox" id="${id}" type="number" min="0" inputmode="numeric" value="${v}">`;
+  };
+
+  return `<div class="match">
+    <div class="small"><b>${A}</b> vs <b>${B}</b></div>
+
+    <!-- Fila A: A1, A2, A3 -->
+    <div class="row-score">
+      <span>${A}</span>
+      ${input(0,'a')}
+      ${input(1,'a')}
+      ${input(2,'a')}
+    </div>
+
+    <!-- Fila B: B1, B2, B3 -->
+    <div class="row-score">
+      <span>${B}</span>
+      ${input(0,'b')}
+      ${input(1,'b')}
+      ${input(2,'b')}
+    </div>
+
+    <div class="actions" style="margin-top:6px">
+      <button class="primary" onclick="saveMatch('${uniq}','${aId}','${bId}','${leg}',${ri},${idx})">Guardar</button>
+      <button class="ghost" onclick="deleteMatch('${uniq}')">Borrar</button>
+    </div>
+  </div>`;
+}
+
+function renderLeg(container, rounds, leg){
+  const root = document.querySelector(container);
+  const filt = $('#filterTeam') ? $('#filterTeam').value : 'ALL';
+  const list = rounds.map((games,ri)=> games.map((g,idx)=>({ri,idx,g}))).flat();
+  const filtered = (filt==='ALL') ? list : list.filter(({g:[x,y]})=> x===filt || y===filt);
+
+  root.innerHTML = filtered.map(({ri,idx,g:[a,b]})=> matchCard(a,b,leg,ri,idx)).join('')
+                   || '<div class="small">(sin partidos)</div>';
+
+  // Enlazar auto-avance de foco en orden A1 → A2 → A3 → B1 → B2 → B3
+  bindAutoAdvance(root);
+}
+
+function bindAutoAdvance(scope){
+  // Por cada tarjeta de partido armamos la secuencia exacta
+  const cards = scope.querySelectorAll('.match');
+  cards.forEach(card=>{
+    // Encuentra los IDs presentes dentro de esta card
+    const allInputs = Array.from(card.querySelectorAll('input.setBox'));
+    if(allInputs.length === 0) return;
+
+    // Construimos la lista en orden de foco solicitado: A1,A2,A3,B1,B2,B3
+    const ids = allInputs.map(el => el.id);
+    const uniqPrefix = ids[0].split('_s')[0]; // "pair_leg_ri_idx"
+
+    const seqIds = [
+      `${uniqPrefix}_s1a`, `${uniqPrefix}_s2a`, `${uniqPrefix}_s3a`,
+      `${uniqPrefix}_s1b`, `${uniqPrefix}_s2b`, `${uniqPrefix}_s3b`,
+    ];
+
+    // Filtrar por si falta algún set (igual mantiene el orden)
+    const seq = seqIds
+      .map(id => card.querySelector(`#${CSS.escape(id)}`))
+      .filter(Boolean);
+
+    seq.forEach((el, i) => {
+      el.addEventListener('input', () => {
+        if (String(el.value).length >= 1) {
+          const next = seq[i+1];
+          if (next) next.focus();
+        }
+      });
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const next = seq[i+1];
+          if (next) next.focus();
+        }
+        if (e.key === 'ArrowLeft' && el.selectionStart === 0) {
+          const prev = seq[i-1];
+          if (prev) { e.preventDefault(); prev.focus(); }
+        }
+        if (e.key === 'ArrowRight' && el.selectionStart === String(el.value).length) {
+          const next = seq[i+1];
+          if (next) { e.preventDefault(); next.focus(); }
+        }
+      });
+    });
+  });
+}
+
+window.saveMatch = async (uniq, a, b, leg, ri, idx)=>{
+  // Leer por IDs (A1,A2,A3,B1,B2,B3) para evitar des-orden
+  const get = (id) => document.getElementById(id);
+  const A1 = Number(get(`${uniq}_s1a`)?.value || 0);
+  const A2 = Number(get(`${uniq}_s2a`)?.value || 0);
+  const A3 = Number(get(`${uniq}_s3a`)?.value || 0);
+  const B1 = Number(get(`${uniq}_s1b`)?.value || 0);
+  const B2 = Number(get(`${uniq}_s2b`)?.value || 0);
+  const B3 = Number(get(`${uniq}_s3b`)?.value || 0);
+
+  // Armar sets solo con los que tengan datos
+  const rawSets = [[A1,B1],[A2,B2],[A3,B3]];
+  const sets = rawSets.filter(([x,y]) => (x>0 || y>0));
+
+  if (sets.length < 2) { alert('Carga al menos dos sets'); return; }
+
+  let sa = 0, sb = 0;
+  sets.forEach(([x,y])=>{ if(x>y) sa++; else if(y>x) sb++; });
+  if (sa === sb && sets.length < 3) { alert('Falta el 3er set'); return; }
+
+  const pts_a = sa > sb ? 3 : 0;
+  const pts_b = sb > sa ? 3 : 0;
+
+  const payload = {
+    league_id: LEAGUE_ID,
+    uniq, leg, round: ri + 1,
+    team_a: a, team_b: b,
+    sets, pts_a, pts_b
+  };
+
+  const { error } = await supabase.from('matches').upsert(payload).select('*').single();
+  if (error) { console.error('upsert error', error); alert('No se pudo guardar el partido'); return; }
+
+  // Recargar listas para reflejar tabla/fixture
+  await reloadAll();
+};
 <!DOCTYPE html>
 <html lang="es">
 <head>
