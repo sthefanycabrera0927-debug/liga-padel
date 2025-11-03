@@ -150,7 +150,10 @@
         <h1>🏆 Liga Femenina – <span style="color:#10b981">No puedo, tengo pádel</span></h1>
         <div class="small">Supabase + caché local. Cruces ida/vuelta, resultados y tabla.</div>
       </div>
-      <div class="pill" id="connBadge">🔌 Local</div>
+      <div class="actions">
+        <button id="btnPing" class="ghost">🔍 Probar conexión</button>
+        <div class="pill" id="connBadge">🔌 Local</div>
+      </div>
     </header>
 
     <nav class="actions" id="topFilters" style="margin-bottom:6px">
@@ -162,7 +165,7 @@
 
     <!-- PAREJAS (COLAPSABLE) -->
     <section id="sec-parejas" class="grid">
-      <div class="card togglable is-collapsed" id="pairsCard">
+      <div class="card togglable" id="pairsCard">
         <div class="hd">
           <strong>👥 Parejas / Jugadoras</strong>
           <div class="actions">
@@ -179,18 +182,18 @@
 
     <!-- CRUCES (IDA y VUELTA, SIN JORNADAS) -->
     <section id="sec-cruces" class="grid">
-      <div class="card togglable is-collapsed" id="crucesCard">
+      <div class="card togglable" id="crucesCard">
         <div class="hd">
           <strong>🎾 Cruces</strong>
           <div class="small" id="fixtureInfo"></div>
         </div>
         <div class="bd">
-          <details class="cruces" id="block-ida">
+          <details class="cruces" id="block-ida" open>
             <summary>IDA</summary>
             <div class="lanes" id="lanes-ida"></div>
           </details>
 
-          <details class="cruces" id="block-vuelta" style="margin-top:12px">
+          <details class="cruces" id="block-vuelta" style="margin-top:12px" open>
             <summary>VUELTA</summary>
             <div class="lanes" id="lanes-vuelta"></div>
           </details>
@@ -349,19 +352,41 @@
         location.reload();
       }
     });
+
+    // Botón de prueba de conexión
+    $('#btnPing').addEventListener('click', testConnection);
   }
 
+  // Visibilidad por defecto: ABIERTAS en primera carga
   function restoreCollapsers(){
-    // cards
     const pc = localStorage.getItem('pairsCollapsed');
-    if(pc===null || pc==='true') $('#pairsCard').classList.add('is-collapsed'); else $('#pairsCard').classList.remove('is-collapsed');
+    if(pc === 'true') $('#pairsCard').classList.add('is-collapsed'); else $('#pairsCard').classList.remove('is-collapsed');
     const cc = localStorage.getItem('crucesCollapsed');
-    if(cc===null || cc==='true') $('#crucesCard').classList.add('is-collapsed'); else $('#crucesCard').classList.remove('is-collapsed');
-    // details
-    const idaOpen = localStorage.getItem('cruceIdaOpen')==='true';
-    const vtaOpen = localStorage.getItem('cruceVueltaOpen')==='true';
-    $('#block-ida').open = idaOpen;
-    $('#block-vuelta').open = vtaOpen;
+    if(cc === 'true') $('#crucesCard').classList.add('is-collapsed'); else $('#crucesCard').classList.remove('is-collapsed');
+
+    // details: por defecto abiertas si no se guardó preferencia
+    const idaOpen = localStorage.getItem('cruceIdaOpen');
+    const vtaOpen = localStorage.getItem('cruceVueltaOpen');
+    if(idaOpen !== null) $('#block-ida').open = (idaOpen === 'true');
+    if(vtaOpen !== null) $('#block-vuelta').open = (vtaOpen === 'true');
+  }
+
+  async function testConnection(){
+    if(!supabase){
+      $('#connBadge').textContent = '🔌 Local (sin cliente)';
+      return;
+    }
+    try{
+      $('#connBadge').textContent = '⏳ Probando...';
+      const { data, error } = await supabase.from('teams').select('id', { count:'exact', head:true }).eq('league_id', LEAGUE_ID);
+      if(error) throw error;
+      const count = (data && data.length) ? data.length : (typeof data === 'number' ? data : null);
+      $('#connBadge').textContent = `🌐 Supabase (teams: ${count ?? 'ok'})`;
+    }catch(e){
+      console.warn(e);
+      $('#connBadge').textContent = '⚠️ Error conexión';
+      alert('No se pudo conectar a Supabase. Revisa URL/Key o CORS del proyecto.');
+    }
   }
 
   async function onAddTeam(){
