@@ -29,11 +29,8 @@ input[type='text'],input[type='number'],select,button{width:100%}
 .ok{background:var(--ok);color:#0c1b10;border:none}
 .small{font-size:.85rem;color:var(--muted)}
 
-/* Avatar */
-.avatar{display:inline-flex;align-items:center;gap:8px}
-.avatar img{width:28px;height:28px;border-radius:999px;object-fit:cover;border:1px solid var(--border)}
-.avatar .init{width:28px;height:28px;border-radius:999px;display:grid;place-items:center;background:#eef2f7;border:1px solid var(--border);font-size:.8rem;font-weight:700;color:#334}
-.name{white-space:normal;line-height:1.2}
+#teamList .row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border)}
+#teamList .row:last-child{border-bottom:0}
 
 /* Cruces (colapsable) */
 details.cruces{border:1px dashed var(--border);border-radius:12px;padding:8px 10px;background:#fff}
@@ -58,14 +55,9 @@ details.cruces>summary::-webkit-details-marker{display:none}
 .setBox{width:56px;height:48px;border:1px solid var(--border);border-radius:10px;font-size:22px;text-align:center;font-weight:700}
 @media (max-width:640px){.row-score{grid-template-columns:minmax(120px,1fr) 52px 52px 52px}.setBox{width:52px;height:46px;font-size:20px}}
 
-/* Tabla scroll móvil */
-.table-wrap{width:100%;overflow:auto}
-table{width:100%;border-collapse:collapse;min-width:720px}
+table{width:100%;border-collapse:collapse}
 th,td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:left}
 th{position:sticky;top:0;background:var(--panel)}
-
-/* Toast simple */
-.toast{position:fixed;right:16px;bottom:16px;background:#111;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.2);opacity:.95;z-index:999}
 </style>
 </head>
 <body>
@@ -73,12 +65,9 @@ th{position:sticky;top:0;background:var(--panel)}
   <header class="flex" style="justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:12px">
     <div>
       <h1>🏆 Liga Femenina – <span style="color:#10b981">No puedo, tengo pádel</span></h1>
-      <div class="small">Supabase (sin caché). Cruces, juegos y tabla.</div>
+      <div class="small">Cruces, juegos y tabla.</div>
     </div>
-    <div class="actions">
-      <button id="btnMine" class="ghost" style="display:none">👀 Ver solo mis partidos</button>
-      <div class="pill" id="connBadge">🌐 Supabase</div>
-    </div>
+    <div class="pill" id="connBadge">🌐</div>
   </header>
 
   <nav class="actions" style="margin-bottom:6px">
@@ -129,9 +118,10 @@ th{position:sticky;top:0;background:var(--panel)}
     <div class="card">
       <div class="hd">
         <strong>📊 Tabla de posiciones</strong>
+        <div class="actions"><button id="resetLocal" class="danger" style="display:none">Reiniciar cache</button></div>
       </div>
       <div class="bd">
-        <div class="table-wrap">
+        <div style="overflow:auto">
           <table id="standings"><thead><tr>
             <th>#</th><th>Pareja</th><th>PJ</th><th>PG</th><th>PP</th><th>Games +</th><th>Games −</th><th>Dif</th><th>Puntos</th>
           </tr></thead><tbody></tbody></table>
@@ -146,8 +136,6 @@ th{position:sticky;top:0;background:var(--panel)}
   </footer>
 </div>
 
-<div id="toast" class="toast" style="display:none"></div>
-
 <script type="module">
 /* ========= SUPABASE ========= */
 const SUPABASE_URL = 'https://dyaptlmncbbmruyduerv.supabase.co';
@@ -161,49 +149,21 @@ const $ = (s,r=document)=>r.querySelector(s);
 let teams = [];
 let matches = [];
 let fixture = { ida: [], vuelta: [] };
-let myTeamId = null; // para "mis partidos"
 
 init();
 
 async function init(){
-  await detectMe();
   await loadAll();
   bindUI();
-  subscribeRealtime();
-  try{ await Notification.requestPermission().catch(()=>{}); }catch{}
-}
-
-/* ====== sesión / perfil ====== */
-async function detectMe(){
-  const { data:{ session } } = await sb.auth.getSession();
-  if(!session){ return; }
-  // buscar team_id en profiles (si existe)
-  const { data: prof } = await sb.from('profiles').select('team_id').eq('user_id', session.user.id).maybeSingle();
-  if(prof?.team_id){ myTeamId = prof.team_id; $('#btnMine').style.display='inline-flex'; }
-}
-
-/* ====== Realtime Notifier ====== */
-function subscribeRealtime(){
-  const ch = sb.channel('matches_live')
-    .on('postgres_changes',{ event: '*', schema: 'public', table: 'matches', filter:`league_id=eq.${LEAGUE_ID}` },
-      payload => {
-        const m = payload.new || payload.old;
-        showToast('Resultado actualizado: ' + (m?.uniq || 'match'));
-        if(Notification.permission==='granted'){
-          try{ new Notification('Liga Femenina', { body:'Se cargó/actualizó un resultado.' }); }catch{}
-        }
-        loadAll();
-      })
-    .subscribe();
 }
 
 /* ====== LOAD ====== */
 async function loadAll(){
   try{
     const { data: t, error: te } = await sb
-      .from('teams').select('id,name,position,photo_url').eq('league_id', LEAGUE_ID).order('position');
+      .from('teams').select('*').eq('league_id', LEAGUE_ID).order('position');
     if(te) throw te;
-    teams = (t||[]).map(x=>({ id:x.id, name:x.name, position:x.position, photo:x.photo_url||'' }));
+    teams = (t||[]).map(x=>({ id:x.id, name:x.name, position:x.position }));
 
     const { data: m, error: me } = await sb
       .from('matches').select('*').eq('league_id', LEAGUE_ID);
@@ -254,28 +214,20 @@ function bindUI(){
   $('#crucesCard .hd').addEventListener('click', ()=> $('#crucesCard').classList.toggle('is-collapsed'));
   $('#gamesCard .hd').addEventListener('click', ()=> $('#gamesCard').classList.toggle('is-collapsed'));
   $('#filterTeam').addEventListener('change', ()=>{ renderGames(); });
-  $('#btnMine').addEventListener('click', ()=>{
-    if(!myTeamId) return;
-    $('#filterTeam').value = myTeamId;
-    renderGames();
-  });
 }
 
 /* ====== TEAMS ====== */
 function renderTeams(){
   $('#teamList').innerHTML = teams.map((t,i)=>`
     <div class="row">
-      <div class="avatar" style="flex:1 1 auto">
-        ${t.photo ? `<img src="${escape(t.photo)}" alt="">` : `<span class="init">${inits(t.name)}</span>`}
-        <span class="name"><strong>${escape(t.name)}</strong> <span class="small">· #${i+1}</span></span>
-      </div>
+      <div style="flex:1 1 auto"><strong>${escape(t.name)}</strong> <span class="small">· #${i+1}</span></div>
+      <div class="actions" style="flex:0 0 auto"></div>
     </div>`).join('') || '<span class="small">Sin parejas</span>';
 }
 
 function populateTeamFilter(){
   $('#filterTeam').innerHTML = '<option value="ALL">Todas</option>' +
     teams.map(t=>`<option value="${t.id}">${escape(t.name)}</option>`).join('');
-  if(myTeamId){ $('#btnMine').style.display='inline-flex'; }
 }
 
 /* ====== CRUCES (bonitos) ====== */
@@ -289,14 +241,7 @@ function renderFixture(){
   $('#fixture-vuelta').innerHTML = vuelta.map(([a,b])=> fxCard(a,b)).join('') || '<div class="small">(sin cruces)</div>';
 }
 function fxCard(a,b){
-  const A = team(a), B = team(b);
-  const Av = A.photo ? `<img src="${escape(A.photo)}" alt="">` : `<span class="init">${inits(A.name)}</span>`;
-  const Bv = B.photo ? `<img src="${escape(B.photo)}" alt="">` : `<span class="init">${inits(B.name)}</span>`;
-  return `<div class="fx-card">
-    <div class="avatar" style="justify-content:center">${Av}<span class="name">${escape(A.name)}</span></div>
-    <b>vs</b>
-    <div class="avatar" style="justify-content:center">${Bv}<span class="name">${escape(B.name)}</span></div>
-  </div>`;
+  return `<div class="fx-card">${escape(nm(a))}<b>vs</b>${escape(nm(b))}</div>`;
 }
 
 /* ====== JUEGOS ====== */
@@ -318,19 +263,19 @@ function renderLeg(container, rounds, leg){
 }
 
 function matchCard(a,b,leg,ri,idx){
-  // IDs ordenados para uniq estable
+  // IDs ordenados para uniq estable (no rompe si re-ordenas nombres)
   const ia = teams.findIndex(t=>t.id===a);
   const ib = teams.findIndex(t=>t.id===b);
   const aId = (ia<=ib)? a : b;
   const bId = (ia<=ib)? b : a;
-  const A = team(aId), B = team(bId);
+  const Aname = escape(nm(aId));
+  const Bname = escape(nm(bId));
   const uniq = `${[aId,bId].slice().sort().join('__')}_${leg}_${ri}_${idx}`;
 
   const rec = matches.find(m=>m.uniq===uniq);
   const getVal = (s, p) => (rec && rec.sets && rec.sets[s] ? (rec.sets[s][p] ?? '') : '');
   const dateVal = rec?.date ? toDate(rec.date) : '';
 
-  const avatar = t => t.photo ? `<img src="${escape(t.photo)}" alt="">` : `<span class="init">${inits(t.name)}</span>`;
   const input = (s, side) => {
     const p = side === 'a' ? 0 : 1;
     const id = `${uniq}_s${s+1}${side}`;
@@ -339,17 +284,22 @@ function matchCard(a,b,leg,ri,idx){
 
   return `<div class="match">
     <div class="mh">
-      <div class="avatar small"><span>${avatar(A)}</span><b>${escape(A.name)}</b>&nbsp;vs&nbsp;<span>${avatar(B)}</span><b>${escape(B.name)}</b></div>
-      <div class="date"><span class="small">📅</span><input id="${uniq}_date" type="date" value="${dateVal}"></div>
+      <div class="small"><b>${Aname}</b> vs <b>${Bname}</b></div>
+      <div class="date">
+        <span class="small">📅</span>
+        <input id="${uniq}_date" type="date" value="${dateVal}">
+      </div>
     </div>
+    <!-- Fila A: A1, A2, A3 -->
     <div class="row-score">
-      <span class="name">${escape(A.name)}</span>
+      <span>${Aname}</span>
       ${input(0,'a')}
       ${input(1,'a')}
       ${input(2,'a')}
     </div>
+    <!-- Fila B: B1, B2, B3 -->
     <div class="row-score">
-      <span class="name">${escape(B.name)}</span>
+      <span>${Bname}</span>
       ${input(0,'b')}
       ${input(1,'b')}
       ${input(2,'b')}
@@ -364,15 +314,22 @@ function matchCard(a,b,leg,ri,idx){
 function bindAutoAdvance(scope){
   const cards = scope.querySelectorAll('.match');
   cards.forEach(card=>{
-    const first = card.querySelector('input.setBox'); if(!first) return;
+    // obtener uniq de la primera caja
+    const first = card.querySelector('input.setBox');
+    if(!first) return;
     const uniq = first.id.split('_s')[0];
+
+    // Secuencia por SET: A1→B1→A2→B2→A3→B3
     const seqIds = [
       `${uniq}_s1a`, `${uniq}_s1b`,
       `${uniq}_s2a`, `${uniq}_s2b`,
       `${uniq}_s3a`, `${uniq}_s3b`,
     ];
     const seq = seqIds.map(id=> card.querySelector(`#${CSS.escape(id)}`)).filter(Boolean);
+
+    // foco en A1
     seq[0]?.focus();
+
     seq.forEach((el,i)=>{
       el.addEventListener('input', ()=>{
         if(String(el.value).length>=1){
@@ -392,6 +349,7 @@ function bindAutoAdvance(scope){
 }
 
 window.saveMatch = async(uniq,a,b,leg,ri,idx)=>{
+  // Leer A1..B3 + fecha
   const gv = id => Number(document.getElementById(id)?.value || 0);
   const A1 = gv(`${uniq}_s1a`), B1 = gv(`${uniq}_s1b`);
   const A2 = gv(`${uniq}_s2a`), B2 = gv(`${uniq}_s2b`);
@@ -399,6 +357,7 @@ window.saveMatch = async(uniq,a,b,leg,ri,idx)=>{
   const dateVal = document.getElementById(`${uniq}_date`)?.value || null;
 
   const sets = [[A1,B1],[A2,B2],[A3,B3]].filter(([x,y])=> x>0 || y>0);
+
   if(sets.length<2){ alert('Carga al menos dos sets'); return; }
   let sa=0,sb=0; sets.forEach(([x,y])=>{ if(x>y) sa++; else if(y>x) sb++; });
   if(sa===sb && sets.length<3){ alert('Falta el 3er set'); return; }
@@ -413,14 +372,12 @@ window.saveMatch = async(uniq,a,b,leg,ri,idx)=>{
   };
   const { error } = await sb.from('matches').upsert(payload).select('*').single();
   if(error){ console.error('upsert error', error); alert('No se pudo guardar el partido'); return; }
-  showToast('✅ Resultado guardado');
   await loadAll();
 };
 
 window.deleteMatch = async(uniq)=>{
   const { error } = await sb.from('matches').delete().eq('uniq', uniq).eq('league_id', LEAGUE_ID);
   if(error){ console.error('delete error', error); alert('No se pudo borrar'); return; }
-  showToast('🗑️ Resultado borrado');
   await loadAll();
 };
 
@@ -449,17 +406,9 @@ function renderStandings(){
 }
 
 /* ====== utils ====== */
-function team(id){ return teams.find(t=>t.id===id) || {name:'¿?',photo:''}; }
-function nm(id){ return team(id).name; }
-function inits(name){ const p=name.split(/[\/\s]+/).filter(Boolean); return (p[0]?.[0]||'')+(p[1]?.[0]||''); }
+function nm(id){ return teams.find(t=>t.id===id)?.name || '¿?'; }
 function escape(s){ return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]||ch)); }
 function toDate(v){ try{ const d=new Date(v); if(!isNaN(d)) return d.toISOString().slice(0,10); if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; }catch{} return ''; }
-
-function showToast(msg){
-  const t = $('#toast'); if(!t) return;
-  t.textContent = msg; t.style.display='block';
-  setTimeout(()=> t.style.display='none', 2200);
-}
 </script>
 </body>
 </html>
