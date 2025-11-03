@@ -155,8 +155,8 @@ async function init(){
 }
 
 function restoreCollapsers(){
-  // Si quieres persistir estado abierto/cerrado, puedes usar localStorage aquí
-  // Por ahora los dejo colapsados por defecto como pediste.
+  // Colapsados por defecto (como pediste)
+  // Si deseas persistir estado, aquí puedes usar localStorage.
 }
 
 /* ====== LOAD ====== */
@@ -260,35 +260,109 @@ function renderLeg(container, rounds, leg){
   const filt = $('#filterTeam').value || 'ALL';
   const list = rounds.map((games,ri)=> games.map((g,idx)=>({ri,idx,g}))).flat();
   const filtered = (filt==='ALL') ? list : list.filter(({g:[x,y]})=> x===filt || y===filt);
+
   root.innerHTML = filtered.map(({ri,idx,g:[a,b]})=> matchCard(a,b,leg,ri,idx)).join('') || '<div class="small">(sin partidos)</div>';
+
+  // Auto-avance/foco por tarjeta: A1→A2→A3→B1→B2→B3
+  bindAutoAdvance(root);
 }
 
 function matchCard(a,b,leg,ri,idx){
-  const uniq = `${[a,b].slice().sort().join('__')}_${leg}_${ri}_${idx}`; // ⬅️ formato original
+  // ordenar ids para uniq estable
+  const ia = teams.findIndex(t=>t.id===a);
+  const ib = teams.findIndex(t=>t.id===b);
+  const aId = (ia<=ib)? a : b;
+  const bId = (ia<=ib)? b : a;
+  const Aname = escape(nm(aId));
+  const Bname = escape(nm(bId));
+  const uniq = `${[aId,bId].slice().sort().join('__')}_${leg}_${ri}_${idx}`;
+
   const rec = matches.find(m=>m.uniq===uniq);
-  const val = (s,p)=> rec?.sets?.[s]?.[p] ?? '';
-  const input=(s,p)=>`<input class="setBox" data-u="${uniq}" data-s="${s}" data-p="${p}" value="${val(s,p)}">`;
+  const getVal = (s, p) => (rec && rec.sets && rec.sets[s] ? (rec.sets[s][p] ?? '') : '');
+
+  const input = (s, side) => {
+    const p = side === 'a' ? 0 : 1;
+    const id = `${uniq}_s${s+1}${side}`;
+    return `<input class="setBox" id="${id}" type="number" min="0" inputmode="numeric" value="${getVal(s,p)}">`;
+  };
+
   return `<div class="match">
-    <div class="small"><b>${escape(nm(a))}</b> vs <b>${escape(nm(b))}</b></div>
-    <div class="row-score"><span>${escape(nm(a))}</span>${input(0,0)}${input(1,0)}${input(2,0)}</div>
-    <div class="row-score"><span>${escape(nm(b))}</span>${input(0,1)}${input(1,1)}${input(2,1)}</div>
+    <div class="small"><b>${Aname}</b> vs <b>${Bname}</b></div>
+    <!-- Fila A: A1, A2, A3 -->
+    <div class="row-score">
+      <span>${Aname}</span>
+      ${input(0,'a')}
+      ${input(1,'a')}
+      ${input(2,'a')}
+    </div>
+    <!-- Fila B: B1, B2, B3 -->
+    <div class="row-score">
+      <span>${Bname}</span>
+      ${input(0,'b')}
+      ${input(1,'b')}
+      ${input(2,'b')}
+    </div>
     <div class="actions" style="margin-top:6px">
-      <button class="primary" onclick="saveMatch('${uniq}','${a}','${b}','${leg}',${ri},${idx})">Guardar</button>
+      <button class="primary" onclick="saveMatch('${uniq}','${aId}','${bId}','${leg}',${ri},${idx})">Guardar</button>
       <button class="ghost" onclick="deleteMatch('${uniq}')">Borrar</button>
     </div>
   </div>`;
 }
 
+function bindAutoAdvance(scope){
+  const cards = scope.querySelectorAll('.match');
+  cards.forEach(card=>{
+    const firstInput = card.querySelector('input.setBox');
+    // calcular prefijo uniq de esta tarjeta a partir del primer input
+    const ids = Array.from(card.querySelectorAll('input.setBox')).map(x=>x.id);
+    if(ids.length===0) return;
+    const uniqPrefix = ids[0].split('_s')[0];
+
+    // Orden requerido: A1, A2, A3, B1, B2, B3
+    const seqIds = [
+      `${uniqPrefix}_s1a`, `${uniqPrefix}_s2a`, `${uniqPrefix}_s3a`,
+      `${uniqPrefix}_s1b`, `${uniqPrefix}_s2b`, `${uniqPrefix}_s3b`,
+    ];
+    const seq = seqIds.map(id => card.querySelector(`#${CSS.escape(id)}`)).filter(Boolean);
+
+    // foco inicial en A1
+    if (firstInput) firstInput.focus();
+
+    seq.forEach((el, i) => {
+      el.addEventListener('input', ()=>{
+        if(String(el.value).length>=1){
+          const next = seq[i+1];
+          if(next) next.focus();
+        }
+      });
+      el.addEventListener('keydown', (e)=>{
+        if(e.key==='Enter'){ e.preventDefault(); const next = seq[i+1]; if(next) next.focus(); }
+        if(e.key==='ArrowLeft' && el.selectionStart===0){ const prev = seq[i-1]; if(prev){ e.preventDefault(); prev.focus(); } }
+        if(e.key==='ArrowRight' && el.selectionStart===String(el.value).length){ const next = seq[i+1]; if(next){ e.preventDefault(); next.focus(); } }
+      });
+    });
+  });
+}
+
 window.saveMatch = async(uniq,a,b,leg,ri,idx)=>{
-  const fields = [...document.querySelectorAll(`[data-u="${uniq}"]`)];
-  const sets = [[0,1],[2,3],[4,5]].map((_,s)=>[
-    Number(fields[s*2]?.value)||0, Number(fields[s*2+1]?.value)||0
-  ]).filter(x=>x[0]>0||x[1]>0);
+  // leer por IDs: A1,A2,A3,B1,B2,B3
+  const gv = id => Number(document.getElementById(id)?.value || 0);
+  const A1 = gv(`${uniq}_s1a`);
+  const A2 = gv(`${uniq}_s2a`);
+  const A3 = gv(`${uniq}_s3a`);
+  const B1 = gv(`${uniq}_s1b`);
+  const B2 = gv(`${uniq}_s2b`);
+  const B3 = gv(`${uniq}_s3b`);
+
+  const raw = [[A1,B1],[A2,B2],[A3,B3]];
+  const sets = raw.filter(([x,y])=> x>0 || y>0);
 
   if(sets.length<2){ alert('Carga al menos dos sets'); return; }
   let sa=0,sb=0; sets.forEach(([x,y])=>{ if(x>y) sa++; else if(y>x) sb++; });
   if(sa===sb && sets.length<3){ alert('Falta el 3er set'); return; }
-  const pts_a = sa>sb?3:0, pts_b = sb>sa?3:0;
+
+  const pts_a = sa>sb ? 3 : 0;
+  const pts_b = sb>sa ? 3 : 0;
 
   const payload = {
     league_id: LEAGUE_ID, uniq,
@@ -298,13 +372,13 @@ window.saveMatch = async(uniq,a,b,leg,ri,idx)=>{
   const { error } = await sb.from('matches').upsert(payload).select('*').single();
   if(error){ console.error('upsert error', error); alert('No se pudo guardar el partido'); return; }
   await loadAll();
-}
+};
 
 window.deleteMatch = async(uniq)=>{
   const { error } = await sb.from('matches').delete().eq('uniq', uniq).eq('league_id', LEAGUE_ID);
   if(error){ console.error('delete error', error); alert('No se pudo borrar'); return; }
   await loadAll();
-}
+};
 
 /* ====== STANDINGS ====== */
 function renderStandings(){
