@@ -20,13 +20,14 @@ h1,h2{margin:.2rem 0} h1{font-size:clamp(1.4rem,2.3vw,2.2rem)}
 .card.is-collapsed .bd{display:none}
 
 .pill{display:inline-flex;gap:.5rem;align-items:center;padding:.35rem .7rem;border-radius:999px;background:var(--chip);color:#3b4252;font-size:.85rem;border:1px solid var(--border)}
+.badge{display:inline-flex;align-items:center;padding:.2rem .5rem;border-radius:999px;border:1px solid var(--border);background:#fff;font-size:.75rem;color:#555;gap:.4rem}
 input,select,button{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:#fff;color:#111;outline:none}
 input[type='text'],input[type='number'],select,button{width:100%}
 .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .primary{background:var(--accent);color:var(--accent-ink);border:none;font-weight:700}
 .ghost{background:#fff}
-.danger{background:var(--danger);color:#fff;border:none}
-.ok{background:var(--ok);color:#0c1b10;border:none}
+.danger{background:#ff5470;color:#fff;border:none}
+.ok{background:#22c55e;color:#0c1b10;border:none}
 .small{font-size:.85rem;color:var(--muted)}
 
 #teamList .row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border)}
@@ -44,20 +45,27 @@ details.cruces>summary::-webkit-details-marker{display:none}
 .fx-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.04)}
 .fx-card b{display:block;margin:6px 0}
 
-/* Juegos (cargar resultados) */
+/* Juegos (appsito por partido) */
 .lanes{display:grid;gap:12px;grid-template-columns:repeat(2, minmax(0,1fr))}
 @media (max-width:720px){.lanes{grid-template-columns:1fr}}
-.match{position:relative;border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.03)}
+.match{position:relative;border:1px solid var(--border);border-radius:14px;padding:12px;background:#fff;box-shadow:0 6px 20px rgba(16,24,40,.06)}
 .mh{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:6px}
+.mh .left{display:flex;align-items:center;gap:8px}
 .mh .date{display:flex;gap:8px;align-items:center}
 .mh input[type="date"]{width:auto;min-width:140px}
 .row-score{display:grid;grid-template-columns:minmax(140px,1fr) 56px 56px 56px;gap:8px;align-items:center;margin-top:6px}
 .setBox{width:56px;height:48px;border:1px solid var(--border);border-radius:10px;font-size:22px;text-align:center;font-weight:700}
 @media (max-width:640px){.row-score{grid-template-columns:minmax(120px,1fr) 52px 52px 52px}.setBox{width:52px;height:46px;font-size:20px}}
+/* Acciones responsive */
+.match .actions{justify-content:flex-end}
+@media (max-width:560px){.match .actions button{flex:1}}
 
+/* Tabla responsive con scroll */
+.table-wrap{overflow:auto;-webkit-overflow-scrolling:touch}
+#standings{min-width:720px}
 table{width:100%;border-collapse:collapse}
-th,td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:left}
-th{position:sticky;top:0;background:var(--panel)}
+th,td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+th{position:sticky;top:0;background:var(--panel);z-index:1}
 </style>
 </head>
 <body>
@@ -67,7 +75,7 @@ th{position:sticky;top:0;background:var(--panel)}
       <h1>🏆 Liga Femenina – <span style="color:#10b981">No puedo, tengo pádel</span></h1>
       <div class="small">Cruces, juegos y tabla.</div>
     </div>
-    <div class="pill" id="connBadge">🌐</div>
+    <div class="pill" id="connBadge">🌐 Supabase</div>
   </header>
 
   <nav class="actions" style="margin-bottom:6px">
@@ -121,7 +129,7 @@ th{position:sticky;top:0;background:var(--panel)}
         <div class="actions"><button id="resetLocal" class="danger" style="display:none">Reiniciar cache</button></div>
       </div>
       <div class="bd">
-        <div style="overflow:auto">
+        <div class="table-wrap">
           <table id="standings"><thead><tr>
             <th>#</th><th>Pareja</th><th>PJ</th><th>PG</th><th>PP</th><th>Games +</th><th>Games −</th><th>Dif</th><th>Puntos</th>
           </tr></thead><tbody></tbody></table>
@@ -241,7 +249,10 @@ function renderFixture(){
   $('#fixture-vuelta').innerHTML = vuelta.map(([a,b])=> fxCard(a,b)).join('') || '<div class="small">(sin cruces)</div>';
 }
 function fxCard(a,b){
-  return `<div class="fx-card">${escape(nm(a))}<b>vs</b>${escape(nm(b))}</div>`;
+  return `<div class="fx-card">
+    <span class="badge">Juego</span>
+    <div style="margin-top:6px">${escape(nm(a))}<b>vs</b>${escape(nm(b))}</div>
+  </div>`;
 }
 
 /* ====== JUEGOS ====== */
@@ -263,7 +274,7 @@ function renderLeg(container, rounds, leg){
 }
 
 function matchCard(a,b,leg,ri,idx){
-  // IDs ordenados para uniq estable (no rompe si re-ordenas nombres)
+  // IDs ordenados para uniq estable
   const ia = teams.findIndex(t=>t.id===a);
   const ib = teams.findIndex(t=>t.id===b);
   const aId = (ia<=ib)? a : b;
@@ -284,7 +295,10 @@ function matchCard(a,b,leg,ri,idx){
 
   return `<div class="match">
     <div class="mh">
-      <div class="small"><b>${Aname}</b> vs <b>${Bname}</b></div>
+      <div class="left">
+        <span class="badge">Juego</span>
+        <div class="small"><b>${Aname}</b> vs <b>${Bname}</b></div>
+      </div>
       <div class="date">
         <span class="small">📅</span>
         <input id="${uniq}_date" type="date" value="${dateVal}">
@@ -304,7 +318,7 @@ function matchCard(a,b,leg,ri,idx){
       ${input(1,'b')}
       ${input(2,'b')}
     </div>
-    <div class="actions" style="margin-top:6px">
+    <div class="actions" style="margin-top:8px">
       <button class="primary" onclick="saveMatch('${uniq}','${aId}','${bId}','${leg}',${ri},${idx})">Guardar</button>
       <button class="ghost" onclick="deleteMatch('${uniq}')">Borrar</button>
     </div>
@@ -314,7 +328,6 @@ function matchCard(a,b,leg,ri,idx){
 function bindAutoAdvance(scope){
   const cards = scope.querySelectorAll('.match');
   cards.forEach(card=>{
-    // obtener uniq de la primera caja
     const first = card.querySelector('input.setBox');
     if(!first) return;
     const uniq = first.id.split('_s')[0];
