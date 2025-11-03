@@ -41,7 +41,7 @@
 
     // Redirige si ya hay sesión
     const { data:{ session } } = await sb.auth.getSession();
-    if(session){ location.href = 'liga.html'; }
+    if(session){ location.href = 'liga-pade.html'; }
 
     // OAuth Google
     document.getElementById('btnGoogle').onclick = async ()=>{
