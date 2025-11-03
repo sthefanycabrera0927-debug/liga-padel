@@ -6,25 +6,57 @@
   <title>Liga Femenina – No puedo, tengo pádel</title>
   <meta name="theme-color" content="#ffffff">
   <style>
+    /* ======= TEMA CLARO ======= */
     :root{
-      --bg:#f7f9fb; --panel:#ffffff; --text:#0f1220; --muted:#5d667b;
-      --border:#e6e9ef; --accent:#2dd24c; --accent-ink:#0a1b10;
-      --danger:#ff5470; --ok:#22c55e; --chip:#f0f3f8; --line:#dfe4ec;
+      --bg:#f7f9fb;
+      --panel:#ffffff;
+      --text:#0f1220;
+      --muted:#5d667b;
+      --border:#e6e9ef;
+      --accent:#2dd24c;
+      --accent-ink:#0a1b10;
+      --danger:#ff5470;
+      --ok:#22c55e;
+      --chip:#f0f3f8;
+      --line:#dfe4ec;
     }
     *{ box-sizing:border-box }
-    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial; background:var(--bg); color:var(--text) }
-    h1,h2{ margin:.2rem 0 } h1{ font-size:clamp(1.4rem,2.3vw,2.2rem) }
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;
+      background: var(--bg);
+      color: var(--text);
+    }
+    h1,h2{ margin:.2rem 0 }
+    h1{ font-size:clamp(1.4rem,2.3vw,2.2rem) }
     .container{ max-width:1100px; margin:0 auto; padding:20px }
     .grid{ display:grid; grid-template-columns: 1fr; gap:16px }
-    .card{ background:var(--panel); border:1px solid var(--border); border-radius:16px; box-shadow:0 4px 20px rgba(16,24,40,.04) }
-    .card .hd{ display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border) }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow:0 4px 20px rgba(16,24,40,.04);
+    }
+    .card .hd{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 16px;
+      border-bottom:1px solid var(--border);
+    }
     .card .bd{ padding:14px 16px }
+    /* colapsables de card */
     .card.togglable .hd{ cursor:pointer }
     .card.is-collapsed .bd{ display:none }
 
-    .pill{ display:inline-flex; gap:.5rem; align-items:center; padding:.35rem .7rem; border-radius:999px; background:var(--chip); color:#3b4252; font-size:.85rem; border:1px solid var(--border) }
-    input,select,button{ padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:#fff; color:#111; outline:none }
-    input[type='text'],input[type='number'],select,button{ width:100% }
+    .pill{
+      display:inline-flex; gap:.5rem; align-items:center;
+      padding:.35rem .7rem; border-radius:999px; background:var(--chip);
+      color:#3b4252; font-size:.85rem; border:1px solid var(--border);
+    }
+    input,select,button{
+      padding:8px 10px; border-radius:10px; border:1px solid var(--border);
+      background:#fff; color:#111; outline:none;
+    }
+    input[type='text'], input[type='number'], select, button{ width:100% }
     .actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
     .primary{ background:var(--accent); color:var(--accent-ink); border:none; font-weight:700 }
     .ghost{ background:#fff }
@@ -33,48 +65,79 @@
     .small{ font-size:.85rem; color:var(--muted) }
     .flash{ box-shadow:0 0 0 3px var(--accent) inset }
 
-    /* Parejas */
+    /* ======= PAREJAS ======= */
     #teamList .row{display:flex; gap:8px; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px dashed var(--border)}
     #teamList .row:last-child{border-bottom:0}
 
-    /* Bloques colapsables internos (IDA/VUELTA) */
-    details.block{ border:1px dashed var(--border); border-radius:12px; padding:8px 10px; background:#fff }
-    details.block>summary{ cursor:pointer; list-style:none; font-weight:700 }
-    details.block>summary::-webkit-details-marker{ display:none }
+    /* ======= CRUCES: shell colapsable ======= */
+    details.cruces{ border:1px dashed var(--border); border-radius:12px; padding:8px 10px; background:#fff }
+    details.cruces>summary{ cursor:pointer; list-style:none; font-weight:700 }
+    details.cruces>summary::-webkit-details-marker{ display:none }
 
-    /* CRUCES – carriles */
-    .lanes{ display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px }
-    .lane{ border:1px solid var(--border); border-radius:12px; background:#fff; padding:10px 0; position:relative }
-    .lane-title{ font-weight:700; padding:6px 12px 8px; border-bottom:1px solid var(--border) }
-    .lane-body{ position:relative; padding:10px 8px 4px 28px }
-    .lane-body::before{ content:""; position:absolute; left:16px; top:10px; bottom:10px; width:2px; background:var(--line); border-radius:2px }
-    .match.ro{ position:relative; border:1px solid var(--border); border-radius:12px; padding:12px; background:#fff; margin:10px 8px }
-    .lane .match.ro::before{ content:""; position:absolute; left:-12px; top:22px; width:12px; height:2px; background:var(--line); border-radius:2px }
-    .ro-head{ display:flex; gap:8px; align-items:center; justify-content:space-between; margin-bottom:6px }
-    .ro-names{ font-weight:600 }
-    .ro-sets{ font-size:.9rem; color:#475569 }
+    /* ======= CRUCES: carriles (estilo llave simple) ======= */
+    .lanes{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap:14px;
+    }
+    .lane{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      padding:10px 0 10px 0;
+      position:relative;
+    }
+    .lane-title{
+      font-weight:700; padding:6px 12px 8px 12px; border-bottom:1px solid var(--border);
+    }
+    .lane-body{
+      position:relative; padding:10px 8px 4px 28px; /* espacio para la espina */
+    }
+    .lane-body::before{
+      content:""; position:absolute; left:16px; top:10px; bottom:10px;
+      width:2px; background:var(--line);
+      border-radius:2px;
+    }
 
-    /* JUEGOS – cards editables */
-    .match.ed{ border:1px solid var(--border); border-radius:12px; padding:12px; background:#fff; margin:10px 0 }
-    .mh{ display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:10px }
+    .match{
+      position:relative;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:12px;
+      background:#fff;
+      margin:10px 8px;
+    }
+    .lane .match::before{
+      content:""; position:absolute; left:-12px; top:22px; width:12px; height:2px;
+      background:var(--line); border-radius:2px;
+    }
+
+    .mh{
+      display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:10px;
+    }
     .mh .date{ display:flex; gap:8px; align-items:center }
     .mh .btns{ display:flex; gap:8px; align-items:center; margin-left:auto }
     .mh input[type="date"]{ width:auto; min-width:140px }
 
-    .score{ display:grid; gap:8px }
-    .row-score{ display:grid; grid-template-columns: minmax(160px,1fr) repeat(3,64px); gap:8px; align-items:center }
+    .score{ display:grid; gap:8px; }
+    .row-score{
+      display:grid; grid-template-columns: minmax(140px,1fr) repeat(3,64px); gap:8px; align-items:center;
+    }
     .row-score + .row-score{ border-top:1px solid var(--border); padding-top:8px; margin-top:8px }
-    .player-name{ font-weight:600; line-height:1.2; white-space:normal }
-    .setBox{ width:64px; height:56px; border:1px solid var(--border); border-radius:10px; font-size:26px; text-align:center; font-weight:700 }
+    .player-name{ font-weight:600; line-height:1.2; white-space:normal } /* nombres completos, sin corte */
+    .setBox{
+      width:64px; height:56px; border:1px solid var(--border); border-radius:10px;
+      font-size:26px; text-align:center; font-weight:700;
+    }
 
-    /* Tabla */
+    /* ======= TABLA ======= */
     table{ width:100%; border-collapse:collapse }
     th,td{ padding:8px 6px; border-bottom:1px solid var(--border); text-align:left }
     th{ position:sticky; top:0; background:var(--panel) }
 
-    /* Mobile */
+    /* ======= Mobile tweaks ======= */
     @media (max-width: 640px){
-      .row-score{ grid-template-columns: minmax(130px,1fr) repeat(3,52px) }
+      .row-score{ grid-template-columns: minmax(120px,1fr) repeat(3,52px); }
       .setBox{ width:52px; height:48px; font-size:22px }
       .mh input[type="date"]{ min-width:0; flex:1 }
     }
@@ -85,7 +148,7 @@
     <header class="flex" style="justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:12px">
       <div>
         <h1>🏆 Liga Femenina – <span style="color:#10b981">No puedo, tengo pádel</span></h1>
-        <div class="small">Supabase + caché local. Cruces (solo lectura) y Juegos (carga de resultados).</div>
+        <div class="small">Supabase + caché local. Cruces ida/vuelta, resultados y tabla.</div>
       </div>
       <div class="pill" id="connBadge">🔌 Local</div>
     </header>
@@ -97,7 +160,7 @@
       <button id="regenFixture" class="ghost">🔄 Regenerar cruces</button>
     </nav>
 
-    <!-- PAREJAS (colapsable por defecto) -->
+    <!-- PAREJAS (COLAPSABLE) -->
     <section id="sec-parejas" class="grid">
       <div class="card togglable is-collapsed" id="pairsCard">
         <div class="hd">
@@ -108,11 +171,13 @@
             <button id="reloadAll" class="ghost">Recargar</button>
           </div>
         </div>
-        <div class="bd"><div id="teamList"></div></div>
+        <div class="bd">
+          <div id="teamList"></div>
+        </div>
       </div>
     </section>
 
-    <!-- CRUCES (SOLO LECTURA, colapsable por defecto) -->
+    <!-- CRUCES (IDA y VUELTA, SIN JORNADAS) -->
     <section id="sec-cruces" class="grid">
       <div class="card togglable is-collapsed" id="crucesCard">
         <div class="hd">
@@ -120,37 +185,27 @@
           <div class="small" id="fixtureInfo"></div>
         </div>
         <div class="bd">
-          <details class="block" id="cruces-ida"><summary>IDA</summary>
+          <details class="cruces" id="block-ida">
+            <summary>IDA</summary>
             <div class="lanes" id="lanes-ida"></div>
           </details>
-          <details class="block" id="cruces-vuelta" style="margin-top:12px"><summary>VUELTA</summary>
+
+          <details class="cruces" id="block-vuelta" style="margin-top:12px">
+            <summary>VUELTA</summary>
             <div class="lanes" id="lanes-vuelta"></div>
           </details>
         </div>
       </div>
     </section>
 
-    <!-- JUEGOS (CARGA DE RESULTADOS, colapsable por defecto) -->
-    <section id="sec-juegos" class="grid">
-      <div class="card togglable is-collapsed" id="juegosCard">
-        <div class="hd"><strong>🧾 Juegos (cargar resultados)</strong></div>
-        <div class="bd">
-          <details class="block" id="juegos-ida"><summary>IDA</summary>
-            <div id="games-ida"></div>
-          </details>
-          <details class="block" id="juegos-vuelta" style="margin-top:12px"><summary>VUELTA</summary>
-            <div id="games-vuelta"></div>
-          </details>
-        </div>
-      </div>
-    </section>
-
-    <!-- TABLA (siempre visible) -->
+    <!-- TABLA -->
     <section id="sec-tabla" class="grid">
       <div class="card">
         <div class="hd">
           <strong>📊 Tabla de posiciones</strong>
-          <div class="actions"><button id="resetLocal" class="danger">Reiniciar cache local</button></div>
+          <div class="actions">
+            <button id="resetLocal" class="danger">Reiniciar cache local</button>
+          </div>
         </div>
         <div class="bd">
           <div style="overflow:auto">
@@ -175,21 +230,22 @@
   </div>
 
   <script type="module">
-  /* ======= Supabase / Estado ======= */
+  // ======= Supabase / Estado =======
   const SUPABASE_URL = 'https://dyaptlmncbbmruyduerv.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5YXB0bG1uY2JibXJ1eWR1ZXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1Nzc0MjgsImV4cCI6MjA3NjE1MzQyOH0.5bSZuq8G1XW3LYoM92J5skRuUpnUQYbd_oKT3toTSlA';
-  const LEAGUE_ID = 'lfnpd-2025'; const ALLOW_PUBLIC_WRITE = true;
+  const LEAGUE_ID = 'lfnpd-2025';
+  const ALLOW_PUBLIC_WRITE = true;
 
   import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
   const hasSB = SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length > 20;
   const supabase = hasSB ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
-  $('#connBadge').textContent = hasSB ? '🌐 Supabase' : '🔌 Local';
 
   const $ = (s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const LS_KEY = 'liga-padel-cache-v13';
+  const LS_KEY = 'liga-padel-cache-v12';
   let state = loadLocal() || { teams: [], matches: [], fixtures:{ida:[],vuelta:[]} };
   const DEFAULT_TEAMS = ['Jessi/Ck','Vanessa/Auri','Patty/Vero','Valen/Sele','Enyor/Stef','Nathaly/Cristina','Nativid/Olga'];
+  $('#connBadge').textContent = hasSB ? '🌐 Supabase' : '🔌 Local';
 
   init();
   async function init(){
@@ -209,15 +265,21 @@
   function pairRank(a,b){ const [x,y]=orderPair(a,b); return [indexOfTeam(x), indexOfTeam(y)]; }
   function comparePairs(p1a,p1b,p2a,p2b){ const r1=pairRank(p1a,p1b), r2=pairRank(p2a,p2b); if(r1[0]!==r2[0]) return r1[0]-r2[0]; return r1[1]-r2[1]; }
 
+  // ======= helpers para carriles / “semillas” =======
   function seedIndex(id){ return state.teams.findIndex(t=>t.id===id); }
-  function laneKey(a,b){ return Math.min(seedIndex(a), seedIndex(b)); }
-  function laneTitleFromKey(k){ return `Semillas ${k+1}–${k+2}`; }
+  function laneKey(a,b){ return Math.min(seedIndex(a), seedIndex(b)); } // por semilla mínima
+  function laneTitleFromKey(key){ return `Semillas ${key+1}–${key+2}`; }
 
   function buildRoundRobin(ids){
     const arr = ids.slice(); if(arr.length%2===1) arr.push('BYE'); const n = arr.length; const rounds=[];
     for(let r=0; r<n-1; r++){
-      const round=[]; for(let i=0;i<n/2;i++){ const a=arr[i], b=arr[n-1-i]; if(a!=='BYE' && b!=='BYE') round.push([a,b]); }
-      rounds.push(round); arr.splice(1,0,arr.pop());
+      const round=[];
+      for(let i=0;i<n/2;i++){
+        const a=arr[i], b=arr[n-1-i];
+        if(a!=='BYE' && b!=='BYE') round.push([a,b]);
+      }
+      rounds.push(round);
+      arr.splice(1,0,arr.pop());
     }
     return rounds;
   }
@@ -246,28 +308,31 @@
       if(state.teams.length===0){ state.teams = DEFAULT_TEAMS.map((name,i)=>({ id: uid(), name, position:i })); saveLocal(); }
     }
 
+    // Cruces (ida / vuelta) a partir de RR
     const ids = state.teams.map(t=>t.id);
     state.fixtures = { ida: buildRoundRobin(ids), vuelta: [] };
     state.fixtures.vuelta = state.fixtures.ida.map(r=> r.map(p=>[p[1],p[0]]));
 
     renderTeams();
     populateTeamFilters();
-    renderCrucesAll();   // solo lectura
-    renderJuegosAll();   // carga
+    renderAllMatches(); // ida+vuelta
     renderStandings();
   }
 
   function bindUI(){
-    // toggles cards
-    $('#pairsCard .hd').addEventListener('click', ()=> toggleCard('pairsCard','pairsCollapsed'));
-    $('#crucesCard .hd').addEventListener('click', ()=> toggleCard('crucesCard','crucesCollapsed'));
-    $('#juegosCard .hd').addEventListener('click', ()=> toggleCard('juegosCard','juegosCollapsed'));
+    // toggle cards (parejas + cruces)
+    $('#pairsCard .hd').addEventListener('click', ()=>{
+      $('#pairsCard').classList.toggle('is-collapsed');
+      localStorage.setItem('pairsCollapsed', String($('#pairsCard').classList.contains('is-collapsed')));
+    });
+    $('#crucesCard .hd').addEventListener('click', ()=>{
+      $('#crucesCard').classList.toggle('is-collapsed');
+      localStorage.setItem('crucesCollapsed', String($('#crucesCard').classList.contains('is-collapsed')));
+    });
 
-    // details (persist)
-    $('#cruces-ida').addEventListener('toggle', ()=> localStorage.setItem('crucesIdaOpen', String($('#cruces-ida').open)));
-    $('#cruces-vuelta').addEventListener('toggle', ()=> localStorage.setItem('crucesVtaOpen', String($('#cruces-vuelta').open)));
-    $('#juegos-ida').addEventListener('toggle', ()=> localStorage.setItem('juegosIdaOpen', String($('#juegos-ida').open)));
-    $('#juegos-vuelta').addEventListener('toggle', ()=> localStorage.setItem('juegosVtaOpen', String($('#juegos-vuelta').open)));
+    // detalles ida/vuelta (persisten abiertos/cerrados)
+    $('#block-ida').addEventListener('toggle', ()=> localStorage.setItem('cruceIdaOpen', String($('#block-ida').open)));
+    $('#block-vuelta').addEventListener('toggle', ()=> localStorage.setItem('cruceVueltaOpen', String($('#block-vuelta').open)));
 
     $('#addPair').addEventListener('click', onAddTeam);
     $('#reloadAll').addEventListener('click', reloadAll);
@@ -275,32 +340,30 @@
       const ids = state.teams.map(t=>t.id);
       state.fixtures.ida = buildRoundRobin(ids);
       state.fixtures.vuelta = state.fixtures.ida.map(r=> r.map(p=>[p[1],p[0]]));
-      renderCrucesAll(); renderJuegosAll();
+      renderAllMatches();
     });
-    $('#filterTeam').addEventListener('change', ()=>{ renderCrucesAll(); renderJuegosAll(); });
-
+    $('#filterTeam').addEventListener('change', renderAllMatches);
     $('#resetLocal').addEventListener('click', ()=>{
-      if(confirm('¿Borrar caché local?')){ localStorage.removeItem(LS_KEY); location.reload(); }
+      if(confirm('¿Borrar caché local?')){
+        localStorage.removeItem(LS_KEY);
+        location.reload();
+      }
     });
-  }
-
-  function toggleCard(id,key){
-    const el = $('#'+id); el.classList.toggle('is-collapsed');
-    localStorage.setItem(key, String(el.classList.contains('is-collapsed')));
   }
 
   function restoreCollapsers(){
-    const pairsC = localStorage.getItem('pairsCollapsed'); if(pairsC===null || pairsC==='true') $('#pairsCard').classList.add('is-collapsed');
-    const crucesC= localStorage.getItem('crucesCollapsed'); if(crucesC===null || crucesC==='true') $('#crucesCard').classList.add('is-collapsed');
-    const juegosC= localStorage.getItem('juegosCollapsed'); if(juegosC===null || juegosC==='true') $('#juegosCard').classList.add('is-collapsed');
-
-    $('#cruces-ida').open = localStorage.getItem('crucesIdaOpen')==='true';
-    $('#cruces-vuelta').open = localStorage.getItem('crucesVtaOpen')==='true';
-    $('#juegos-ida').open = localStorage.getItem('juegosIdaOpen')==='true';
-    $('#juegos-vuelta').open = localStorage.getItem('juegosVtaOpen')==='true';
+    // cards
+    const pc = localStorage.getItem('pairsCollapsed');
+    if(pc===null || pc==='true') $('#pairsCard').classList.add('is-collapsed'); else $('#pairsCard').classList.remove('is-collapsed');
+    const cc = localStorage.getItem('crucesCollapsed');
+    if(cc===null || cc==='true') $('#crucesCard').classList.add('is-collapsed'); else $('#crucesCard').classList.remove('is-collapsed');
+    // details
+    const idaOpen = localStorage.getItem('cruceIdaOpen')==='true';
+    const vtaOpen = localStorage.getItem('cruceVueltaOpen')==='true';
+    $('#block-ida').open = idaOpen;
+    $('#block-vuelta').open = vtaOpen;
   }
 
-  /* ======= Parejas ======= */
   async function onAddTeam(){
     const name = $('#teamName').value.trim(); if(!name){ alert('Nombre vacío'); return; }
     if(state.teams.some(t=>t.name.toLowerCase()===name.toLowerCase())){ alert('Ya existe'); return; }
@@ -310,16 +373,20 @@
       if(error){ alert('No se pudo guardar en Supabase'); console.warn(error); return; }
       state.teams.push({ id:data.id, name:data.name, position:data.position });
     }else{
-      state.teams.push({ id: uid(), name, position }); saveLocal();
+      state.teams.push({ id: uid(), name, position });
+      saveLocal();
     }
-    $('#teamName').value=''; await reloadAll();
+    $('#teamName').value='';
+    await reloadAll();
   }
 
   function renderTeams(){
     const list = $('#teamList');
     const html = state.teams.map((t,i)=>`
       <div class="row">
-        <div style="flex:1 1 auto"><strong>${escapeHtml(t.name)}</strong> <span class="small">· #${i+1}</span></div>
+        <div style="flex:1 1 auto">
+          <strong>${escapeHtml(t.name)}</strong> <span class="small">· #${i+1}</span>
+        </div>
         <div class="actions" style="flex:0 0 auto">
           <button class="ghost" onclick="moveTeam(${i},-1)">↑</button>
           <button class="ghost" onclick="moveTeam(${i},1)">↓</button>
@@ -328,102 +395,62 @@
       </div>`).join('');
     list.innerHTML = html || '<span class="small">Sin parejas</span>';
   }
-  window.moveTeam = async (i,dir)=>{ const j=i+dir; if(j<0 || j>=state.teams.length) return;
-    const x=state.teams.splice(i,1)[0]; state.teams.splice(j,0,x); state.teams.forEach((t,idx)=> t.position = idx);
-    if(supabase){ await supabase.from('teams').upsert(state.teams.map(t=>({ id:t.id, position:t.position, league_id: LEAGUE_ID }))); } else saveLocal();
+
+  window.moveTeam = async (i,dir)=>{
+    const j=i+dir; if(j<0 || j>=state.teams.length) return;
+    const x=state.teams.splice(i,1)[0]; state.teams.splice(j,0,x);
+    state.teams.forEach((t,idx)=> t.position = idx);
+    if(supabase){
+      await supabase.from('teams').upsert(state.teams.map(t=>({ id:t.id, position:t.position, league_id: LEAGUE_ID })));
+    } else saveLocal();
     await reloadAll();
   };
-  window.removeTeam = async (id)=>{ if(!confirm('¿Eliminar esta pareja?')) return;
-    if(supabase){ await supabase.from('matches').delete().eq('league_id', LEAGUE_ID).or('team_a.eq.'+id+',team_b.eq.'+id); await supabase.from('teams').delete().eq('id', id); }
-    else{ state.teams = state.teams.filter(t=>t.id!==id); state.matches = state.matches.filter(m=>m.A!==id && m.B!==id); saveLocal(); }
+
+  window.removeTeam = async (id)=>{
+    if(!confirm('¿Eliminar esta pareja?')) return;
+    if(supabase){
+      await supabase.from('matches').delete().eq('league_id', LEAGUE_ID).or('team_a.eq.'+id+',team_b.eq.'+id);
+      await supabase.from('teams').delete().eq('id', id);
+    }else{
+      state.teams = state.teams.filter(t=>t.id!==id);
+      state.matches = state.matches.filter(m=>m.A!==id && m.B!==id);
+      saveLocal();
+    }
     await reloadAll();
   };
+
   function populateTeamFilters(){
-    const opts = ['<option value="ALL">Todas</option>'].concat(state.teams.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`)).join('');
-    $('#filterTeam').innerHTML = opts;
+    const opts = ['<option value="ALL">Todas</option>']
+      .concat(state.teams.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`))
+      .join('');
+    const ft = $('#filterTeam');
+    if(ft) ft.innerHTML = opts;
   }
 
-  /* ======= CRUCES (solo lectura) ======= */
-  function seedLaneGroup(list){
-    const map = new Map();
-    list.forEach(item=>{
-      const [a,b]=item.g; const key = laneKey(a,b);
-      if(!map.has(key)) map.set(key, []);
-      map.get(key).push(item);
-    });
-    return Array.from(map.entries()).sort((a,b)=> a[0]-b[0]); // [[key, items], ...]
-  }
-  function cruceRow(uniq,a,b,setsSaved){
-    const A=escapeHtml(teamName(a)), B=escapeHtml(teamName(b));
-    const setsTxt = setsSaved?.length ? setsSaved.map(s=>`${s[0]||0}-${s[1]||0}`).join(', ') : '';
-    const chip = setsTxt? `<span class="pill">${setsTxt}</span>` : '';
-    return `<div class="match ro">
-      <div class="ro-head">
-        <div class="ro-names">A: ${A} <span class="small" style="opacity:.6">|</span> B: ${B}</div>
-        <div class="actions">
-          ${chip}
-          <button class="ghost" onclick="scrollToGame('${uniq}')">Ir al juego</button>
-        </div>
-      </div>
-    </div>`;
-  }
-  function renderCrucesLeg(containerSel, rounds, leg){
-    const root = $(containerSel); const teamFilter = $('#filterTeam')?.value || 'ALL';
-    const full = rounds.map((games,ri)=> games.map((g,idx)=>({ri,idx,g}))).flat();
-    const filtered = (teamFilter==='ALL') ? full : full.filter(({g:[x,y]})=> x===teamFilter || y===teamFilter);
-    // ordenar estable
-    filtered.sort((m1,m2)=> comparePairs(m1.g[0],m1.g[1],m2.g[0],m2.g[1]));
-    // agrupar por carril/semilla
-    const lanes = seedLaneGroup(filtered);
-    const html = lanes.map(([k,items])=>{
-      const body = items.map(({ri,idx,g})=>{
-        const [a,b] = indexOfTeam(g[0])<=indexOfTeam(g[1]) ? [g[0],g[1]] : [g[1],g[0]];
-        const uniq = [a,b].slice().sort().join('__')+'_'+leg+'_'+ri+'_'+idx;
-        const saved = state.matches.find(m=>m.uniq===uniq);
-        return cruceRow(uniq,a,b,(saved||{}).sets);
-      }).join('') || '<div class="small">(sin partidos)</div>';
-      return `<div class="lane"><div class="lane-title">${laneTitleFromKey(k)}</div><div class="lane-body">${body}</div></div>`;
-    }).join('') || '<div class="small">(sin partidos)</div>';
-    root.innerHTML = html;
-  }
-  function renderCrucesAll(){
-    const ida = state.fixtures.ida||[]; const vuelta = state.fixtures.vuelta||[];
-    const nTeams = state.teams.length; const perLeg = nTeams*(nTeams-1)/2;
-    $('#fixtureInfo').textContent = `Parejas: ${nTeams} · Partidos por fase: ${perLeg}`;
-    renderCrucesLeg('#lanes-ida', ida, 'ida');
-    renderCrucesLeg('#lanes-vuelta', vuelta, 'vuelta');
-  }
-  window.scrollToGame = function(uniq){
-    const el = document.getElementById('game_'+uniq);
-    if(!el){ alert('No se encontró la card del juego.'); return; }
-    // abrir contenedores si están cerrados
-    const isIda = uniq.includes('_ida_');
-    const det = isIda ? $('#juegos-ida') : $('#juegos-vuelta');
-    if(det && !det.open){ det.open = true; localStorage.setItem(isIda?'juegosIdaOpen':'juegosVtaOpen','true'); }
-    // expandir la card de juegos si está colapsada
-    const card = $('#juegosCard'); if(card.classList.contains('is-collapsed')) toggleCard('juegosCard','juegosCollapsed');
-    el.scrollIntoView({behavior:'smooth', block:'center'}); el.classList.add('flash'); setTimeout(()=> el.classList.remove('flash'), 1200);
-  };
-
-  /* ======= JUEGOS (edición) ======= */
+  /* ======= inputs ======= */
   function makeSetInput(uniq,i,side,sets){
     const val = (sets[i] && sets[i][side==='A'?0:1]) || '';
     const id  = `${uniq}_s${i+1}${side.toLowerCase()}`;
     return `<input class="setBox" id="${id}" type="number" min="0" inputmode="numeric" value="${val}">`;
   }
-  function gameCard(a,b,leg,ri,idx){
-    const ia=indexOfTeam(a), ib=indexOfTeam(b); const aId=(ia<=ib)?a:b, bId=(ia<=ib)?b:a;
-    const A=escapeHtml(teamName(aId)), B=escapeHtml(teamName(bId));
-    const uniq = [aId,bId].slice().sort().join('__')+'_'+leg+'_'+ri+'_'+idx;
-    const existing = state.matches.find(m=>m.uniq===uniq) || {};
-    const sets = existing.sets || []; const dateVal = toDateInputValue(existing.date);
 
-    return `<div class="match ed" id="game_${uniq}">
+  function matchCard(a,b,leg,roundIndex,idxInRound){
+    const ia=indexOfTeam(a), ib=indexOfTeam(b); const aId= (ia<=ib)? a:b, bId=(ia<=ib)? b:a;
+    const A = escapeHtml(teamName(aId)); const B = escapeHtml(teamName(bId));
+    const uniq = [aId,bId].slice().sort().join('__')+'_'+leg+'_'+roundIndex+'_'+idxInRound;
+    const existing = state.matches.find(m=>m.uniq===uniq) || {};
+    const sets = existing.sets || [];
+    const dateVal = toDateInputValue(existing.date);
+
+    return `<div class="match">
       <div class="mh">
         <div class="small">A vs B</div>
-        <div class="date"><span class="small">📅</span><input id="${uniq}_date" type="date" value="${dateVal||''}"></div>
+        <div class="date">
+          <span class="small">📅</span>
+          <input id="${uniq}_date" type="date" value="${dateVal||''}">
+        </div>
         <div class="btns">
-          <button class="ok" onclick="saveCard('${aId}','${bId}','${leg}',${ri},${idx})">${existing.id?'Actualizar':'Guardar'}</button>
+          <button class="ok" onclick="saveCard('${aId}','${bId}','${leg}',${roundIndex},${idxInRound})">${existing.id?'Actualizar':'Guardar'}</button>
           <button class="ghost" onclick="clearMatch('${uniq}')">Borrar resultado</button>
         </div>
       </div>
@@ -443,44 +470,91 @@
       </div>
     </div>`;
   }
+
+  // ======= render por carriles =======
+  function renderLeg(containerSelector, rounds, leg){
+    const root = document.querySelector(containerSelector);
+    const teamFilter = $('#filterTeam')?.value || 'ALL';
+
+    // lista estable con (ri, idx, g=[a,b])
+    const list = rounds.map((games,ri)=> games.map((g,idx)=>({ri,idx,g}))).flat();
+
+    // filtro por pareja
+    const filtered = (teamFilter==='ALL') ? list
+      : list.filter(({g:[x,y]})=> x===teamFilter || y===teamFilter);
+
+    // agrupar por carril según “semilla mínima”
+    const lanesMap = new Map();
+    filtered.forEach(item=>{
+      const [a,b] = item.g;
+      const key = laneKey(a,b);
+      if(!lanesMap.has(key)) lanesMap.set(key, []);
+      lanesMap.get(key).push(item);
+    });
+
+    const laneKeys = Array.from(lanesMap.keys()).sort((x,y)=> x-y);
+
+    const lanesHTML = laneKeys.map(k=>{
+      const items = lanesMap.get(k).sort((m1,m2)=>{
+        const [a1,b1]=m1.g, [a2,b2]=m2.g;
+        return comparePairs(a1,b1,a2,b2);
+      });
+      const body = items.map(({ri,idx,g})=> matchCard(g[0],g[1],leg,ri,idx)).join('') || '<div class="small">(sin partidos)</div>';
+      return `<div class="lane">
+        <div class="lane-title">${laneTitleFromKey(k)}</div>
+        <div class="lane-body">${body}</div>
+      </div>`;
+    }).join('');
+
+    root.innerHTML = lanesHTML || '<div class="small">(sin partidos)</div>';
+
+    // listeners fecha
+    $$(`${containerSelector} input[type="date"]`).forEach(inp=>{
+      inp.addEventListener('change', async function(){
+        const uniq = this.id.replace('_date','');
+        const rec = state.matches.find(x=>x.uniq===uniq);
+        if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderStandings(); }
+      });
+    });
+
+    bindAutoAdvance(root);
+  }
+
+  function renderAllMatches(){
+    const ida = state.fixtures.ida||[]; const vuelta = state.fixtures.vuelta||[];
+    const nTeams = state.teams.length; const perLeg = nTeams*(nTeams-1)/2;
+    $('#fixtureInfo').textContent = `Parejas: ${nTeams} · Partidos por fase: ${perLeg}`;
+    renderLeg('#lanes-ida', ida, 'ida');
+    renderLeg('#lanes-vuelta', vuelta, 'vuelta');
+  }
+
   function bindAutoAdvance(scope){
-    $$('.match.ed', scope).forEach(card=>{
+    $$('.match', scope).forEach(card=>{
       const order = [
-        ...card.querySelectorAll('input[id$="_s1a"]'),...card.querySelectorAll('input[id$="_s1b"]'),
-        ...card.querySelectorAll('input[id$="_s2a"]'),...card.querySelectorAll('input[id$="_s2b"]'),
-        ...card.querySelectorAll('input[id$="_s3a"]'),...card.querySelectorAll('input[id$="_s3b"]'),
+        ...card.querySelectorAll('input[id$="_s1a"]'),
+        ...card.querySelectorAll('input[id$="_s1b"]'),
+        ...card.querySelectorAll('input[id$="_s2a"]'),
+        ...card.querySelectorAll('input[id$="_s2b"]'),
+        ...card.querySelectorAll('input[id$="_s3a"]'),
+        ...card.querySelectorAll('input[id$="_s3b"]'),
       ];
       order.forEach((el,idx)=>{
-        el.addEventListener('input', ()=>{ if(String(el.value).length>=1){ const next = order[idx+1]; if(next) next.focus(); } });
-        el.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); const next=order[idx+1]; if(next) next.focus(); }
-          if(e.key==='ArrowLeft' && el.selectionStart===0){ const prev=order[idx-1]; if(prev){ e.preventDefault(); prev.focus(); } }
-          if(e.key==='ArrowRight' && el.selectionStart===String(el.value).length){ const next=order[idx+1]; if(next){ e.preventDefault(); next.focus(); } }
+        el.addEventListener('input', ()=>{
+          if(String(el.value).length>=1){
+            const next = order[idx+1];
+            if(next) next.focus();
+          }
+        });
+        el.addEventListener('keydown', (e)=>{
+          if(e.key==='Enter'){ e.preventDefault(); const next = order[idx+1]; if(next) next.focus(); }
+          if(e.key==='ArrowLeft' && el.selectionStart===0){ const prev = order[idx-1]; if(prev){ e.preventDefault(); prev.focus(); } }
+          if(e.key==='ArrowRight' && el.selectionStart===String(el.value).length){ const next = order[idx+1]; if(next){ e.preventDefault(); next.focus(); } }
         });
       });
     });
   }
-  function renderGamesLeg(containerSel, rounds, leg){
-    const root = $(containerSel); const teamFilter = $('#filterTeam')?.value || 'ALL';
-    const list = rounds.map((games,ri)=> games.map((g,idx)=>({ri,idx,g}))).flat();
-    const filtered = (teamFilter==='ALL') ? list : list.filter(({g:[x,y]})=> x===teamFilter || y===teamFilter);
-    filtered.sort((m1,m2)=> comparePairs(m1.g[0],m1.g[1],m2.g[0],m2.g[1]));
-    root.innerHTML = filtered.map(({ri,idx,g})=> gameCard(g[0],g[1],leg,ri,idx)).join('') || '<div class="small">(sin partidos)</div>';
 
-    // fecha -> guardar en tiempo real
-    $$(`${containerSel} input[type="date"]`).forEach(inp=>{
-      inp.addEventListener('change', async function(){
-        const uniq = this.id.replace('_date','');
-        const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderCrucesAll(); renderStandings(); }
-      });
-    });
-    bindAutoAdvance(root);
-  }
-  function renderJuegosAll(){
-    renderGamesLeg('#games-ida', state.fixtures.ida||[], 'ida');
-    renderGamesLeg('#games-vuelta', state.fixtures.vuelta||[], 'vuelta');
-  }
-
-  /* ======= Guardar / Borrar ======= */
+  // ======= Guardar / Borrar =======
   window.saveCard = async (a,b,leg,ri,idx)=>{
     const pair = [a,b].slice().sort().join('__'); const uniq = `${pair}_${leg}_${ri}_${idx}`;
     const get = id => document.getElementById(id);
@@ -502,16 +576,20 @@
     const base = { uniq, A:a, B:b, leg, round:ri+1, sets: vals, ptsA, ptsB, date };
     if(rec){ Object.assign(rec, base); } else { rec = { id: uid(), ...base }; state.matches.push(rec); }
     await upsertMatch(rec);
-    renderCrucesAll(); renderJuegosAll(); renderStandings();
+    renderStandings();
   };
 
   window.clearMatch = async (uniq)=>{
     const rec = state.matches.find(m=>m.uniq===uniq);
     if(!rec) return;
     if(!confirm('¿Borrar el resultado de este partido?')) return;
-    if(supabase){ await supabase.from('matches').delete().eq('uniq', rec.uniq).eq('league_id', LEAGUE_ID); }
-    state.matches = state.matches.filter(m=>m.uniq!==rec.uniq); saveLocal();
-    renderCrucesAll(); renderJuegosAll(); renderStandings();
+    if(supabase){
+      await supabase.from('matches').delete().eq('uniq', rec.uniq).eq('league_id', LEAGUE_ID);
+    }
+    state.matches = state.matches.filter(m=>m.uniq!==rec.uniq);
+    saveLocal();
+    renderAllMatches();
+    renderStandings();
   };
 
   async function upsertMatch(rec){
@@ -524,7 +602,7 @@
     } else saveLocal();
   }
 
-  /* ======= Tabla ======= */
+  // ======= Standings =======
   function renderStandings(){
     const stats = {}; state.teams.forEach(t=> stats[t.id]={ id:t.id, name:t.name, PJ:0, PG:0, PP:0, GW:0, GL:0, PTS:0 });
     state.matches.forEach(m=>{
@@ -534,7 +612,7 @@
       sets.forEach(ab=>{ const a=ab[0]||0, b=ab[1]||0; if(a>b) sA++; else if(b>a) sB++; gA+=a; gB+=b; });
       stats[A].GW+=gA; stats[A].GL+=gB; stats[B].GW+=gB; stats[B].GL+=gA;
       if(sA>sB){ stats[A].PG++; stats[B].PP++; } else { stats[B].PG++; stats[A].PP++; }
-      stats[A].PTS+=ptsA; stats[B].PTS+=ptsB;
+      stats[A].PTS+=ptsA; stats[B].PTS+=ptsB; // 3/0
     });
     const arr = state.teams.map(t=>stats[t.id]).filter(Boolean)
       .sort((x,y)=> (y.PG-x.PG) || (y.GW-x.GW) || (y.PTS-x.PTS));
