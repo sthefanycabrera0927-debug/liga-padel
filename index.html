@@ -60,9 +60,14 @@ details.cruces>summary::-webkit-details-marker{display:none}
 .match .actions{justify-content:flex-end}
 @media (max-width:560px){.match .actions button{flex:1}}
 
-/* Tabla responsive con scroll */
-.table-wrap{overflow:auto;-webkit-overflow-scrolling:touch}
-#standings{min-width:720px}
+/* Tabla responsive con scroll interno */
+.table-wrap{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid var(--border);
+  border-radius:12px;
+}
+#standings{min-width:760px}
 table{width:100%;border-collapse:collapse}
 th,td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
 th{position:sticky;top:0;background:var(--panel);z-index:1}
@@ -126,7 +131,7 @@ th{position:sticky;top:0;background:var(--panel);z-index:1}
     <div class="card">
       <div class="hd">
         <strong>📊 Tabla de posiciones</strong>
-        <div class="actions"><button id="resetLocal" class="danger" style="display:none">Reiniciar cache</button></div>
+        <div class="actions"><!-- placeholder actions --></div>
       </div>
       <div class="bd">
         <div class="table-wrap">
