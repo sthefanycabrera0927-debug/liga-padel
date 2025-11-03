@@ -9,11 +9,12 @@
  --bg:#f7f9fb; --panel:#ffffff; --text:#0f1220; --muted:#5d667b; --border:#e6e9ef;
  --accent:#2dd24c; --accent-ink:#0a1b10; --danger:#ff5470; --ok:#22c55e; --chip:#f0f3f8; --line:#dfe4ec;
 }
-*{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;background:var(--bg);color:var(--text)}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;overflow-x:hidden}
 h1,h2{margin:.2rem 0} h1{font-size:clamp(1.4rem,2.3vw,2.2rem)}
 .container{max-width:1100px;margin:0 auto;padding:20px}
 .grid{display:grid;grid-template-columns:1fr;gap:16px}
-.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:0 4px 20px rgba(16,24,40,.04)}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:0 4px 20px rgba(16,24,40,.04);overflow:hidden}
 .card .hd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
 .card .bd{padding:14px 16px}
 .card.togglable .hd{cursor:pointer}
@@ -56,18 +57,18 @@ details.cruces>summary::-webkit-details-marker{display:none}
 .row-score{display:grid;grid-template-columns:minmax(140px,1fr) 56px 56px 56px;gap:8px;align-items:center;margin-top:6px}
 .setBox{width:56px;height:48px;border:1px solid var(--border);border-radius:10px;font-size:22px;text-align:center;font-weight:700}
 @media (max-width:640px){.row-score{grid-template-columns:minmax(120px,1fr) 52px 52px 52px}.setBox{width:52px;height:46px;font-size:20px}}
-/* Acciones responsive */
 .match .actions{justify-content:flex-end}
 @media (max-width:560px){.match .actions button{flex:1}}
 
-/* Tabla responsive con scroll interno */
+/* Tabla responsive con scroll propio */
 .table-wrap{
+  width:100%;
+  max-width:100%;
   overflow-x:auto;
   -webkit-overflow-scrolling:touch;
-  border:1px solid var(--border);
-  border-radius:12px;
+  overscroll-behavior-inline:contain;
 }
-#standings{min-width:760px}
+#standings{min-width:720px}
 table{width:100%;border-collapse:collapse}
 th,td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
 th{position:sticky;top:0;background:var(--panel);z-index:1}
@@ -131,7 +132,7 @@ th{position:sticky;top:0;background:var(--panel);z-index:1}
     <div class="card">
       <div class="hd">
         <strong>📊 Tabla de posiciones</strong>
-        <div class="actions"><!-- placeholder actions --></div>
+        <div class="actions"><button id="resetLocal" class="danger" style="display:none">Reiniciar cache</button></div>
       </div>
       <div class="bd">
         <div class="table-wrap">
