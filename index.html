@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -38,12 +37,14 @@
       border:1px solid var(--border);
       border-radius:16px;
       box-shadow:0 4px 20px rgba(16,24,40,.04);
+      overflow:hidden;
     }
     .card .hd{
       display:flex; align-items:center; justify-content:space-between;
       padding:12px 16px;
       border-bottom:1px solid var(--border);
       cursor:default;
+      user-select:none;
     }
     .card .bd{ padding:14px 16px }
     .pill{
@@ -76,8 +77,8 @@
     .flash{ box-shadow:0 0 0 3px var(--accent) inset }
 
     /* ======= Colapsables ======= */
-    .card.is-collapsed .bd{ display:none }
     .card.togglable .hd{ cursor:pointer }
+    .card.is-collapsed .bd{ display:none }
     .hd .toggle-tip{ font-size:.85rem; color:var(--muted); margin-left:8px }
 
     /* ======= Jornadas ======= */
@@ -133,7 +134,7 @@
       <button type="button" data-target="#sec-tabla">📊 Tabla</button>
     </nav>
 
-    <!-- PAREJAS: colapsada por defecto -->
+    <!-- PAREJAS (colapsable con persistencia) -->
     <section id="sec-parejas" class="grid mobile-section">
       <div class="card togglable is-collapsed" id="pairsCard">
         <div class="hd">
@@ -151,8 +152,9 @@
       </div>
     </section>
 
+    <!-- CUADROS (colapsable) -->
     <section id="sec-cuadros" class="grid mobile-section">
-      <div class="card">
+      <div class="card togglable" id="fixtureCard">
         <div class="hd">
           <strong>📆 Cuadros (Ida/Vuelta)</strong>
           <div class="actions">
@@ -176,8 +178,9 @@
       </div>
     </section>
 
+    <!-- RESUMEN (colapsable) -->
     <section id="sec-resumen" class="grid mobile-section">
-      <div class="card" id="summaryCard">
+      <div class="card togglable" id="summaryCard">
         <div class="hd">
           <strong>📋 Resumen de Partidos (Ida/Vuelta)</strong>
           <div class="actions">
@@ -198,6 +201,7 @@
       </div>
     </section>
 
+    <!-- TABLA (NO colapsable) -->
     <section id="sec-tabla" class="grid mobile-section">
       <div class="card">
         <div class="hd"><strong>📊 Tabla de posiciones</strong>
@@ -243,19 +247,33 @@
   initTabs();
   await reloadAll();
   bindUI();
+  bindCollapsers(); // <-- colapsables globales (excepto la tabla)
 
-  // --- Parejas: card toggle (colapsada por defecto, persistencia)
+  // --- Parejas: persistencia de colapso
   (function(){
     const card = $('#pairsCard');
     const KEY = 'pairsCollapsed';
     const was = localStorage.getItem(KEY);
     if(was === null || was === 'true') card.classList.add('is-collapsed');
     else card.classList.remove('is-collapsed');
-    card.querySelector('.hd').addEventListener('click', ()=>{
+    card.querySelector('.hd').addEventListener('click', (ev)=>{
+      // si se hace click en inputs/selects/botones dentro del header, no colapsar
+      if(ev.target.closest('button,select,input,label')) return;
       card.classList.toggle('is-collapsed');
       localStorage.setItem(KEY, String(card.classList.contains('is-collapsed')));
     });
   })();
+
+  function bindCollapsers(){
+    // Todas las cards marcadas como .togglable (excepto #pairsCard que ya tiene persistencia)
+    $$('.card.togglable:not(#pairsCard) .hd').forEach(hd=>{
+      hd.addEventListener('click', (ev)=>{
+        if(ev.target.closest('button,select,input,label')) return;
+        const card = hd.closest('.card');
+        card.classList.toggle('is-collapsed');
+      });
+    });
+  }
 
   function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch{} }
   function loadLocal(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch{ return null; } }
@@ -432,7 +450,6 @@
     const sets = existing.sets || [];
     const dateVal = toDateInputValue(existing.date);
 
-    // Card
     const cardHtml = `<div class="card" style="margin-bottom:12px">
       <div class="bd">
         <div class="mh-date small">
@@ -460,10 +477,8 @@
   }
 
   function jornadaBlock(title, games, leg, ri){
-    // Filtro por pareja
     const teamFilter = $('#filterTeam')?.value || 'ALL';
-    const filtered = (teamFilter==='ALL') ? games
-      : games.filter(([x,y])=> x===teamFilter || y===teamFilter);
+    const filtered = (teamFilter==='ALL') ? games : games.filter(([x,y])=> x===teamFilter || y===teamFilter);
 
     const gamesSorted = filtered.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
     const inner = gamesSorted.map((g,idx)=> makeCard(g[0],g[1],leg,ri,idx)).join('');
@@ -492,10 +507,8 @@
     </div>`;
     root.innerHTML = html;
 
-    // Auto-avance en inputs del marcador
     bindAutoAdvance(root);
 
-    // Sincronizar fecha desde la card hacia el resumen/lista
     $$('#cards input[type="date"]').forEach(inp=> inp.addEventListener('change', async function(){
       const uniq = this.id.replace('_date','');
       const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderMatches(); renderSummary(); }
@@ -503,10 +516,7 @@
   }
 
   function bindAutoAdvance(scope){
-    const inputs = $$('input.setBox', scope);
-    // Orden deseado: A1 -> B1 -> A2 -> B2 -> A3 -> B3
     const order = [];
-    // construir orden por card
     const cards = $$('.card', scope);
     cards.forEach(card=>{
       const cardInputs = [
@@ -522,7 +532,6 @@
 
     order.forEach((el,idx)=>{
       el.addEventListener('input', ()=>{
-        // si ya tiene 1-2 dígitos, saltar al siguiente
         if(String(el.value).length>=1){
           const next = order[idx+1];
           if(next) next.focus();
@@ -618,7 +627,6 @@
       if(sA>sB){ stats[A].PG++; stats[B].PP++; } else { stats[B].PG++; stats[A].PP++; }
       stats[A].PTS+=ptsA; stats[B].PTS+=ptsB;
     });
-    // Orden: PG desc, luego GW desc, luego PTS desc (fallback)
     const arr = state.teams.map(t=>stats[t.id]).filter(Boolean)
       .sort((x,y)=> (y.PG-x.PG) || (y.GW-x.GW) || (y.PTS-x.PTS));
     $('#standings tbody').innerHTML = arr.map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(r.name)}</td><td>${r.PJ}</td><td>${r.PG}</td><td>${r.PP}</td><td>${r.GW}</td><td>${r.GL}</td><td>${r.GW-r.GL}</td><td><strong>${(Math.round(r.PTS*10)/10).toFixed(1).replace('.0','')}</strong></td></tr>`).join('')
@@ -639,7 +647,6 @@
       if(!rounds || !rounds.length) return '';
       const cards = rounds.map((games,i)=>{
         if(roundFilter!=='ALL' && i!==Number(roundFilter)-1) return '';
-        // filtro por pareja
         const filtered = (teamFilter==='ALL') ? games : games.filter(([x,y])=> x===teamFilter || y===teamFilter);
         const gamesSorted = filtered.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
         const items = gamesSorted.map((pair,idx)=>{
