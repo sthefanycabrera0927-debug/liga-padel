@@ -1,138 +1,99 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Liga Femenina – No puedo, tengo pádel</title>
-  <meta name="theme-color" content="#ffffff">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Acceso – Liga Femenina</title>
   <style>
-    :root{
-      --bg:#f7f9fb; --panel:#ffffff; --text:#0f1220; --muted:#5d667b; --border:#e6e9ef;
-      --accent:#2dd24c; --accent-ink:#0a1b10; --danger:#ff5470; --chip:#f0f3f8;
-    }
-    *{ box-sizing:border-box } body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto; background:var(--bg); color:var(--text) }
-    h1,h2{ margin:.2rem 0 } .container{ max-width:1100px; margin:0 auto; padding:20px }
-    .card{ background:var(--panel); border:1px solid var(--border); border-radius:16px; box-shadow:0 4px 20px rgba(16,24,40,.04) }
-    .hd{ display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border) }
-    .bd{ padding:14px 16px } .pill{ display:inline-flex; gap:.5rem; align-items:center; padding:.35rem .7rem; border-radius:999px; background:var(--chip); color:#3b4252; font-size:.85rem; border:1px solid var(--border) }
-    input,select,button{ padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:#fff; color:#111; outline:none }
-    .actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
-    .primary{ background:var(--accent); color:var(--accent-ink); border:none; font-weight:700 }
-    .ghost{ background:#fff } .danger{ background:#ff5470; color:#fff; border:none } .ok{ background:var(--accent); color:#0c1b10; border:none }
-
-    /* Bracket simple (sin jornadas) */
-    .br-list{ display:grid; gap:12px }
-    .br-item{ position:relative; border:1px solid var(--border); border-radius:14px; background:#fff; padding:12px 12px 10px }
-    .br-top{ display:flex; gap:10px; align-items:center; justify-content:space-between; color:var(--muted); margin-bottom:8px }
-    .br-grid{ display:grid; grid-template-columns: 1fr 120px 1fr; gap:12px; align-items:center }
-    .side{ display:flex; align-items:center; gap:8px; min-width:0 }
-    .label{ background:var(--chip); border:1px solid var(--border); border-radius:999px; padding:4px 8px; font-weight:700; font-size:.85rem }
-    .name{ font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-    .score{ display:grid; grid-template-columns: repeat(6, 48px); gap:8px; justify-content:center; align-items:center; position:relative }
-    .score input{ width:48px; height:44px; text-align:center; font-weight:800; font-size:20px; border-radius:10px }
-    .line{ position:absolute; left:calc(50% - 1px); top:-16px; bottom:-16px; width:2px; background:var(--border) }
-    .armL,.armR{ position:absolute; top:50%; width:26px; height:2px; background:var(--border) }
-    .armL{ left:-26px } .armR{ right:-26px }
-    .cmds{ display:flex; gap:6px; justify-content:flex-end }
-    @media (max-width:560px){
-      .br-grid{ grid-template-columns: 1fr 100px 1fr }
-      .score{ grid-template-columns: repeat(6,42px) }
-      .score input{ width:42px; height:40px; font-size:18px }
-    }
-    .small{font-size:.9rem;color:var(--muted)}
+    :root{--border:#e6e9ef;--panel:#fff;--bg:#f7f9fb;--accent:#2dd24c;--ink:#0f1220}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Ubuntu,Arial;background:var(--bg);color:var(--ink)}
+    .wrap{min-height:100svh;display:grid;place-items:center;padding:24px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;max-width:520px;width:100%;padding:28px;box-shadow:0 6px 28px rgba(16,24,40,.06)}
+    h1{margin:0 0 8px}
+    p{margin:0 0 16px;color:#5d667b}
+    .btn{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-weight:600;cursor:pointer}
+    .btn.primary{background:var(--accent);border-color:transparent;color:#0a1b10}
+    .btn[disabled]{opacity:.6;cursor:progress}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .muted{color:#5d667b;font-size:.9rem}
+    .error{color:#b00020;margin-top:10px;min-height:1.2em}
   </style>
 </head>
 <body>
-  <div class="container">
-    <header class="hd" style="border-radius:16px; margin-bottom:12px">
-      <div>
-        <h1>🏆 Liga Femenina – <span style="color:#10b981">No puedo, tengo pádel</span></h1>
-        <div class="small">Cruces sin jornadas • Solo suma puntos el ganador.</div>
-      </div>
-      <div class="actions">
-        <span class="pill" id="whoami">Visitante</span>
-        <button id="btnLogout" class="ghost">Salir</button>
-      </div>
-    </header>
+  <div class="wrap">
+    <div class="card">
+      <h1>🏆 Liga Femenina</h1>
+      <p>Inicia sesión para cargar resultados y ver los cruces.</p>
 
-    <!-- Parejas -->
-    <section class="card" style="margin-bottom:12px">
-      <div class="hd"><strong>👥 Parejas</strong>
-        <div class="actions">
-          <input id="teamName" placeholder="Ej: Jessi/Ck" style="max-width:260px" />
-          <button id="addPair" class="primary">Agregar pareja</button>
-        </div>
+      <div class="row" style="margin:8px 0 16px">
+        <button id="btnGoogle" class="btn">
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" height="20" alt="">
+          Iniciar sesión con Google
+        </button>
+        <button id="btnAnon" class="btn">Entrar como visita (solo lectura)</button>
       </div>
-      <div class="bd" id="teamList" style="display:flex; flex-direction:column; gap:8px"></div>
-    </section>
 
-    <!-- Cruces (todo junto por leg) -->
-    <section class="card">
-      <div class="hd"><strong>🎾 Cruces</strong>
-        <div class="actions">
-          <label class="small">Leg:
-            <select id="filterLeg" style="width:auto"><option value="ida">Ida</option><option value="vuelta">Vuelta</option></select>
-          </label>
-          <label class="small">Pareja:
-            <select id="filterTeam" style="width:auto; min-width:160px"><option value="ALL">Todas</option></select>
-          </label>
-          <button id="regenFixture" class="ghost">🔄 Regenerar</button>
-        </div>
-      </div>
-      <div class="bd">
-        <div class="small" id="fixtureInfo" style="margin-bottom:8px"></div>
-        <div id="bracket" class="br-list"></div>
-      </div>
-    </section>
-
-    <!-- Tabla -->
-    <section class="card" style="margin-top:12px">
-      <div class="hd"><strong>📊 Tabla</strong><div class="actions"><button id="resetLocal" class="danger">Reiniciar cache local</button></div></div>
-      <div class="bd" style="overflow:auto">
-        <table id="standings" style="width:100%;border-collapse:collapse">
-          <thead><tr><th>#</th><th>Pareja</th><th>PJ</th><th>PG</th><th>PP</th><th>Games +</th><th>Games −</th><th>Dif</th><th>Puntos</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
+      <div class="muted">Serás redirigida a <code>liga.html</code> al completar el acceso.</div>
+      <div id="err" class="error"></div>
+    </div>
   </div>
 
   <script type="module">
-  // ======= Supabase / Config =======
-  const SUPABASE_URL = 'https://dyaptlmncbbmruyduerv.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5YXB0bG1uY2JibXJ1eWR1ZXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1Nzc0MjgsImV4cCI6MjA3NjE1MzQyOH0.5bSZuq8G1XW3LYoM92J5skRuUpnUQYbd_oKT3toTSlA';
-  const LEAGUE_ID = 'lfnpd-2025';
-  const REQUIRE_LOGIN = true;
+    // ========== TU PROYECTO SUPABASE ==========
+    const SUPABASE_URL = 'https://dyaptlmncbbmruyduerv.supabase.co';
+    const SUPABASE_ANON_KEY =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5YXB0bG1uY2JibXJ1eWR1ZXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1Nzc0MjgsImV4cCI6MjA3NjE1MzQyOH0.5bSZuq8G1XW3LYoM92J5skRuUpnUQYbd_oKT3toTSlA';
 
-  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const $ = (s,r=document)=>r.querySelector(s);
-  const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+    // Construye URL absoluta a liga.html (soporta subcarpetas/GitHub Pages)
+    const targetUrl = new URL('liga.html', location.href).toString();
 
-  // ======= Estado =======
-  const DEFAULT_TEAMS = ['Jessi/Ck','Vanessa/Auri','Patty/Vero','Valen/Sele','Enyor/Stef','Nathaly/Cristina','Nativid/Olga'];
-  const LS_KEY = 'liga-padel-cache-v12';
-  let state = loadLocal() || { teams: [], matches: [], fixtures:{ida:[],vuelta:[]} };
+    const err = document.getElementById('err');
+    const btnGoogle = document.getElementById('btnGoogle');
+    const btnAnon = document.getElementById('btnAnon');
 
-  // ======= Auth gate =======
-  let session = (await supabase.auth.getSession()).data.session;
-  const asGuest = sessionStorage.getItem('guest') === '1';
-  if(REQUIRE_LOGIN && !session && !asGuest){ location.href = 'login.html'; }
-  $('#whoami').textContent = session?.user?.user_metadata?.name || session?.user?.email || (asGuest?'Visitante':'—');
-  $('#btnLogout').onclick = async ()=>{ sessionStorage.removeItem('guest'); await supabase.auth.signOut(); location.href='login.html'; };
+    function setBusy(v){
+      btnGoogle.disabled = v;
+      btnAnon.disabled = v;
+      err.textContent = '';
+    }
 
-  // Utils
-  function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch{} }
-  function loadLocal(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch{ return null; } }
-  function uid(){ return Math.random().toString(36).slice(2,9); }
-  const escapeHtml = s => String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  const teamName = id => (state.teams.find(t=>t.id===id)||{}).name || '¿?';
-  const toDate = v => { if(!v) return ''; const d=new Date(v); return isNaN(d)? '' : d.toISOString().slice(0,10); };
-  const indexOfTeam = id => state.teams.findIndex(t=>t.id===id);
-  const orderPair = (a,b)=> (indexOfTeam(a)<=indexOfTeam(b))? [a,b] : [b,a];
-  const comparePairs = (p1a,p1b,p2a,p2b)=>{ const r1=orderPair(p1a,p1b).map(indexOfTeam); const r2=orderPair(p2a,p2b).map(indexOfTeam); return (r1[0]-r2[0])||(r1[1]-r2[1]); };
+    // Redirige si ya hay sesión
+    try {
+      const { data:{ session } } = await sb.auth.getSession();
+      if(session){
+        location.href = targetUrl;
+      }
+    } catch(e){ /* sin bloqueo */ }
 
-  function buildRoundRobin(ids){
-    const arr = ids.slice(); if(arr.length%2===1) arr.push('BYE'); const n=arr.length, rounds=[];
-    for(let r=0;r<n-1;r++){ const round=[]; for(let i=0;i<n/2;i++){ const a=arr[i], b=arr[n-1-i]; if(a!=='BYE'&&b!=='BYE') round.push([a,b]); } rounds.push(round);
+    // OAuth Google
+    btnGoogle.onclick = async ()=>{
+      try{
+        setBusy(true);
+        const { error } = await sb.auth.signInWithOAuth({
+          provider:'google',
+          options:{
+            redirectTo: targetUrl,
+            queryParams: { prompt: 'select_account' } // permite elegir cuenta
+          }
+        });
+        if(error) throw error;
+      }catch(e){
+        setBusy(false);
+        err.textContent = 'No se pudo iniciar sesión con Google.';
+        console.error(e);
+      }
+    };
+
+    // Modo visita (solo lectura)
+    btnAnon.onclick = ()=>{
+      setBusy(true);
+      sessionStorage.setItem('guest','1');
+      location.href = targetUrl;
+    };
+  </script>
+</body>
+</html>
