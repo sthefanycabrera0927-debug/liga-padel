@@ -150,28 +150,64 @@ th{position:sticky;top:0;background:var(--panel);z-index:1}
   </footer>
 </div>
 
-<script type="module">
-/* ========= SUPABASE (jsDelivr ESM) ========= */
-const SUPABASE_URL = 'https://dyaptlmncbbmruyduerv.supabase.co';
-const SUPABASE_ANON_KEY =
- 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5YXB0bG1uY2JibXJ1eWR1ZXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1Nzc0MjgsImV4cCI6MjA3NjE1MzQyOH0.5bSZuq8G1XW3LYoM92J5skRuUpnUQYbd_oKT3toTSlA';
+  <script type="module">
+  const SUPABASE_URL = 'https://dyaptlmncbbmruyduerv.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5YXB0bG1uY2JibXJ1eWR1ZXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1Nzc0MjgsImV4cCI6MjA3NjE1MzQyOH0.5bSZuq8G1XW3LYoM92J5skRuUpnUQYbd_oKT3toTSlA';
+  const LEAGUE_ID = 'lfnpd-2025';
+  const ALLOW_PUBLIC_WRITE = true;
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  const hasSB = SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length > 20;
+  const supabase = hasSB ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-const LEAGUE_ID = 'lfnpd-2025';
-const $ = (s,r=document)=>r.querySelector(s);
+  const $ = (s,r=document)=>r.querySelector(s);
+  const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const LS_KEY = 'liga-padel-cache-v11';
+  let state = loadLocal() || { teams: [], matches: [], fixtures:{ida:[],vuelta:[]}, dates:{}, showSummaryResults:false };
+  const DEFAULT_TEAMS = ['Jessi/Ck','Vanessa/Auri','Patty/Vero','Valen/Sele','Enyor/Stef','Nathaly/Cristina','Nativid/Olga'];
 
-let teams = [];
-let matches = [];
-let fixture = { ida: [], vuelta: [] };
-
-init();
-
-async function init(){
-  await loadAll();
+  $('#connBadge').textContent = hasSB ? '🌐 Supabase' : '🔌 Local';
+  initTabs();
+  await reloadAll();
   bindUI();
-}
+
+  // --- Parejas: card toggle (colapsada por defecto, persistencia)
+  (function(){
+    const card = $('#pairsCard');
+    const KEY = 'pairsCollapsed';
+    const was = localStorage.getItem(KEY);
+    if(was === null || was === 'true') card.classList.add('is-collapsed');
+    else card.classList.remove('is-collapsed');
+    card.querySelector('.hd').addEventListener('click', ()=>{
+      card.classList.toggle('is-collapsed');
+      localStorage.setItem(KEY, String(card.classList.contains('is-collapsed')));
+    });
+  })();
+
+  function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch{} }
+  function loadLocal(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch{ return null; } }
+  function uid(){ return Math.random().toString(36).slice(2,9); }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]||ch)); }
+  function teamName(id){ const t = state.teams.find(t=>t.id===id); return t? t.name : '¿?'; }
+  function toDateInputValue(v){ if(!v) return ''; const d=new Date(v); if(!isNaN(d)) return d.toISOString().slice(0,10); if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; return ''; }
+  function indexOfTeam(id){ return state.teams.findIndex(t=>t.id===id); }
+  function orderPair(a,b){ const ia=indexOfTeam(a), ib=indexOfTeam(b); return (ia<=ib)? [a,b] : [b,a]; }
+  function pairRank(a,b){ const [x,y]=orderPair(a,b); return [indexOfTeam(x), indexOfTeam(y)]; }
+  function comparePairs(p1a,p1b,p2a,p2b){ const r1=pairRank(p1a,p1b), r2=pairRank(p2a,p2b); if(r1[0]!==r2[0]) return r1[0]-r2[0]; return r1[1]-r2[1]; }
+
+  function buildRoundRobin(ids){
+    const arr = ids.slice(); if(arr.length%2===1) arr.push('BYE'); const n = arr.length; const rounds=[];
+    for(let r=0; r<n-1; r++){
+      const round=[];
+      for(let i=0;i<n/2;i++){
+        const a=arr[i], b=arr[n-1-i];
+        if(a!=='BYE' && b!=='BYE') round.push([a,b]);
+      }
+      rounds.push(round);
+      arr.splice(1,0,arr.pop());
+    }
+    return rounds;
+  }
 
 /* ====== LOAD ====== */
 async function loadAll(){
