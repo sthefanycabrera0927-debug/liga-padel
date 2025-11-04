@@ -60,7 +60,7 @@ details.cruces>summary::-webkit-details-marker{display:none}
 .match .actions{justify-content:flex-end}
 @media (max-width:560px){.match .actions button{flex:1}}
 
-/* Tabla responsive con scroll propio */
+/* Tabla responsive con su propio scroll horizontal */
 .table-wrap{
   width:100%;
   max-width:100%;
@@ -146,29 +146,27 @@ th{position:sticky;top:0;background:var(--panel);z-index:1}
 
   <footer class="flex" style="justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:6px">
     <div class="small">Reglas: Victoria = <strong>3 pts</strong> • Derrota = <strong>0 pts</strong>.</div>
-    <span class="pill">v1.0</span>
+    <a class="pill" href="index.html">🔐 Salir / Login</a>
   </footer>
 </div>
 
-<!-- ==== APP (MÓDULO) ==== -->
 <script type="module">
-/* ========= SUPABASE (v2 con jsDelivr + ESM) ========= */
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.4/+esm";
-
+/* ========= SUPABASE (jsDelivr ESM) ========= */
 const SUPABASE_URL = 'https://dyaptlmncbbmruyduerv.supabase.co';
 const SUPABASE_ANON_KEY =
  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5YXB0bG1uY2JibXJ1eWR1ZXJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1Nzc0MjgsImV4cCI6MjA3NjE1MzQyOH0.5bSZuq8G1XW3LYoM92J5skRuUpnUQYbd_oKT3toTSlA';
 
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ========= APP STATE ========= */
 const LEAGUE_ID = 'lfnpd-2025';
 const $ = (s,r=document)=>r.querySelector(s);
+
 let teams = [];
 let matches = [];
 let fixture = { ida: [], vuelta: [] };
 
-init().catch(console.error);
+init();
 
 async function init(){
   await loadAll();
@@ -178,15 +176,12 @@ async function init(){
 /* ====== LOAD ====== */
 async function loadAll(){
   try{
-    // ping para mostrar conexión
-    $('#connBadge').textContent = '🌐 Conectado a Supabase';
-
-    const { data: t, error: te } = await sb
+    const { data: t, error: te } = await db
       .from('teams').select('*').eq('league_id', LEAGUE_ID).order('position');
     if(te) throw te;
     teams = (t||[]).map(x=>({ id:x.id, name:x.name, position:x.position }));
 
-    const { data: m, error: me } = await sb
+    const { data: m, error: me } = await db
       .from('matches').select('*').eq('league_id', LEAGUE_ID);
     if(me) throw me;
     matches = (m||[]).map(x=>({
@@ -203,10 +198,11 @@ async function loadAll(){
     renderFixture();
     renderGames();
     renderStandings();
+    $('#connBadge').textContent = '🌐 Supabase OK';
   }catch(e){
     console.error('Error cargando Supabase:', e);
+    $('#connBadge').textContent = '⚠️ Supabase';
     alert('No se pudieron cargar datos de Supabase. Revisar credenciales/RLS.');
-    $('#connBadge').textContent = '⚠️ Sin conexión';
   }
 }
 
@@ -242,14 +238,14 @@ function bindUI(){
 function renderTeams(){
   $('#teamList').innerHTML = teams.map((t,i)=>`
     <div class="row">
-      <div style="flex:1 1 auto"><strong>${escapeHtml(t.name)}</strong> <span class="small">· #${i+1}</span></div>
+      <div style="flex:1 1 auto"><strong>${escape(t.name)}</strong> <span class="small">· #${i+1}</span></div>
       <div class="actions" style="flex:0 0 auto"></div>
     </div>`).join('') || '<span class="small">Sin parejas</span>';
 }
 
 function populateTeamFilter(){
   $('#filterTeam').innerHTML = '<option value="ALL">Todas</option>' +
-    teams.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+    teams.map(t=>`<option value="${t.id}">${escape(t.name)}</option>`).join('');
 }
 
 /* ====== CRUCES (bonitos) ====== */
@@ -265,7 +261,7 @@ function renderFixture(){
 function fxCard(a,b){
   return `<div class="fx-card">
     <span class="badge">Juego</span>
-    <div style="margin-top:6px">${escapeHtml(nm(a))}<b>vs</b>${escapeHtml(nm(b))}</div>
+    <div style="margin-top:6px">${escape(nm(a))}<b>vs</b>${escape(nm(b))}</div>
   </div>`;
 }
 
@@ -288,13 +284,12 @@ function renderLeg(container, rounds, leg){
 }
 
 function matchCard(a,b,leg,ri,idx){
-  // IDs ordenados para uniq estable
   const ia = teams.findIndex(t=>t.id===a);
   const ib = teams.findIndex(t=>t.id===b);
   const aId = (ia<=ib)? a : b;
   const bId = (ia<=ib)? b : a;
-  const Aname = escapeHtml(nm(aId));
-  const Bname = escapeHtml(nm(bId));
+  const Aname = escape(nm(aId));
+  const Bname = escape(nm(bId));
   const uniq = `${[aId,bId].slice().sort().join('__')}_${leg}_${ri}_${idx}`;
 
   const rec = matches.find(m=>m.uniq===uniq);
@@ -318,14 +313,12 @@ function matchCard(a,b,leg,ri,idx){
         <input id="${uniq}_date" type="date" value="${dateVal}">
       </div>
     </div>
-    <!-- Fila A: A1, A2, A3 -->
     <div class="row-score">
       <span>${Aname}</span>
       ${input(0,'a')}
       ${input(1,'a')}
       ${input(2,'a')}
     </div>
-    <!-- Fila B: B1, B2, B3 -->
     <div class="row-score">
       <span>${Bname}</span>
       ${input(0,'b')}
@@ -333,8 +326,8 @@ function matchCard(a,b,leg,ri,idx){
       ${input(2,'b')}
     </div>
     <div class="actions" style="margin-top:8px">
-      <button class="primary" onclick="window.saveMatch('${uniq}','${aId}','${bId}','${leg}',${ri},${idx})">Guardar</button>
-      <button class="ghost" onclick="window.deleteMatch('${uniq}')">Borrar</button>
+      <button class="primary" onclick="saveMatch('${uniq}','${aId}','${bId}','${leg}',${ri},${idx})">Guardar</button>
+      <button class="ghost" onclick="deleteMatch('${uniq}')">Borrar</button>
     </div>
   </div>`;
 }
@@ -346,7 +339,6 @@ function bindAutoAdvance(scope){
     if(!first) return;
     const uniq = first.id.split('_s')[0];
 
-    // Secuencia por SET: A1→B1→A2→B2→A3→B3
     const seqIds = [
       `${uniq}_s1a`, `${uniq}_s1b`,
       `${uniq}_s2a`, `${uniq}_s2b`,
@@ -354,7 +346,6 @@ function bindAutoAdvance(scope){
     ];
     const seq = seqIds.map(id=> card.querySelector(`#${CSS.escape(id)}`)).filter(Boolean);
 
-    // foco en A1
     seq[0]?.focus();
 
     seq.forEach((el,i)=>{
@@ -375,10 +366,8 @@ function bindAutoAdvance(scope){
   });
 }
 
-/* ====== Guardar / Borrar ====== */
 window.saveMatch = async(uniq,a,b,leg,ri,idx)=>{
   try{
-    // Leer A1..B3 + fecha
     const gv = id => Number(document.getElementById(id)?.value || 0);
     const A1 = gv(`${uniq}_s1a`), B1 = gv(`${uniq}_s1b`);
     const A2 = gv(`${uniq}_s2a`), B2 = gv(`${uniq}_s2b`);
@@ -400,23 +389,27 @@ window.saveMatch = async(uniq,a,b,leg,ri,idx)=>{
       sets, pts_a, pts_b, date: dateVal || null
     };
 
-    const { error } = await sb.from('matches').upsert(payload).select('*').single();
-    if(error) throw error;
+    const { error } = await db
+      .from('matches')
+      .upsert(payload, { onConflict: 'uniq' })
+      .select('*')
+      .single();
 
+    if(error) throw error;
     await loadAll();
   }catch(err){
-    console.error('upsert error', err);
+    console.error('saveMatch error:', err);
     alert('No se pudo guardar el partido:\n' + (err?.message || err));
   }
 };
 
 window.deleteMatch = async(uniq)=>{
   try{
-    const { error } = await sb.from('matches').delete().eq('uniq', uniq).eq('league_id', LEAGUE_ID);
+    const { error } = await db.from('matches').delete().eq('uniq', uniq).eq('league_id', LEAGUE_ID);
     if(error) throw error;
     await loadAll();
   }catch(err){
-    console.error('delete error', err);
+    console.error('deleteMatch error:', err);
     alert('No se pudo borrar:\n' + (err?.message || err));
   }
 };
@@ -440,14 +433,14 @@ function renderStandings(){
     .sort((x,y)=> (y.PTS-x.PTS) || (y.GW-x.GW));
 
   $('#standings tbody').innerHTML = arr.map((r,i)=>`
-    <tr><td>${i+1}</td><td>${escapeHtml(r.name)}</td><td>${r.PJ}</td><td>${r.PG}</td><td>${r.PP}</td>
+    <tr><td>${i+1}</td><td>${escape(r.name)}</td><td>${r.PJ}</td><td>${r.PG}</td><td>${r.PP}</td>
     <td>${r.GW}</td><td>${r.GL}</td><td>${r.GW-r.GL}</td><td><strong>${r.PTS}</strong></td></tr>
   `).join('') || `<tr><td colspan="9" class="small">Sin datos</td></tr>`;
 }
 
 /* ====== utils ====== */
 function nm(id){ return teams.find(t=>t.id===id)?.name || '¿?'; }
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]||ch)); }
+function escape(s){ return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]||ch)); }
 function toDate(v){ try{ const d=new Date(v); if(!isNaN(d)) return d.toISOString().slice(0,10); if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; }catch{} return ''; }
 </script>
 </body>
