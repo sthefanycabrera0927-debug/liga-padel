@@ -30,10 +30,11 @@
       background: var(--bg);
       color: var(--text);
       -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
-      font-size: 14.5px; /* ↓ un poco la base */
+      font-size: 14.25px;
     }
+    strong{ font-weight:600 } /* ↓ grosor global */
     h1,h2{ margin:.2rem 0 }
-    h1{ font-size:clamp(1.2rem,2vw,1.9rem); color:var(--ink-strong) }
+    h1{ font-size:clamp(1.15rem,2vw,1.8rem); color:var(--ink-strong); font-weight:700 }
     .container{ max-width:1100px; margin:0 auto; padding:20px }
     .grid{ display:grid; grid-template-columns: 1fr; gap:16px }
     .card{
@@ -46,21 +47,20 @@
       display:flex; align-items:center; justify-content:space-between;
       padding:10px 14px;
       border-bottom:1px solid var(--border);
-      font-size: .95rem;
+      font-size: .94rem;
     }
     .card .bd{ padding:12px 14px }
     .pill{
       display:inline-flex; gap:.45rem; align-items:center;
-      padding:.32rem .6rem; border-radius:999px; background:var(--chip);
-      color:#0c1529; font-size:.82rem; border:1px solid var(--border);
+      padding:.28rem .55rem; border-radius:999px; background:var(--chip);
+      color:#0c1529; font-size:.8rem; border:1px solid var(--border);
       white-space:nowrap;
     }
     input,select,button{
       padding:8px 10px; border-radius:10px; border:1px solid var(--border);
-      background:#fff; color:#0f1220; outline:none; font-size:.92rem;
+      background:#fff; color:#0f1220; outline:none; font-size:.9rem;
     }
     input[type='text'], input[type='number'], select, button{ width:100% }
-    /* Ocultar spinners */
     input[type=number]::-webkit-outer-spin-button,
     input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0 }
     input[type=number]{ -moz-appearance:textfield }
@@ -69,10 +69,16 @@
     .ghost{ background:#fff }
     .danger{ background:var(--danger); color:#fff; border:none }
     .ok{ background:var(--ok); color:#052e1a; border:none; font-weight:700 }
-    table{ width:100%; border-collapse:collapse; min-width:560px; font-size:.93rem }
+    .icon-btn{
+      width:36px; height:36px; border:1px solid var(--border); border-radius:10px;
+      background:#fff; display:inline-flex; align-items:center; justify-content:center;
+      font-size:18px; cursor:pointer;
+    }
+    .icon-btn:hover{ box-shadow:0 0 0 2px rgba(0,0,0,.03) inset }
+    table{ width:100%; border-collapse:collapse; min-width:560px; font-size:.92rem }
     th,td{ padding:8px 8px; border-bottom:1px solid var(--border); text-align:left }
     th{ position:sticky; top:0; background:var(--panel); z-index:1 }
-    .small{ font-size:.82rem; color:var(--muted) }
+    .small{ font-size:.8rem; color:var(--muted) }
     .mobile-tabs{ display:none; gap:8px; position:sticky; top:0; z-index:5; padding:8px 0 }
     .mobile-tabs button{
       flex:1; padding:10px 12px; border-radius:999px; border:1px solid var(--border);
@@ -110,11 +116,11 @@
       display:flex; align-items:center; gap:8px; flex:1; min-width:0;
     }
     .mhd .names{
-      display:flex; gap:6px; align-items:center; min-width:0; font-size:.98rem; color:#0b1227
+      display:flex; gap:6px; align-items:center; min-width:0; font-size:.95rem; color:#0b1227; font-weight:600;
     }
-    .mhd .names strong{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:48ch } /* ↑ más ancho útil */
+    .mhd .names strong{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:50ch }
     .mhd .meta{ margin-left:auto; display:flex; gap:6px; align-items:center; flex-wrap:wrap }
-    .m-bd{ padding:10px 12px; background:linear-gradient(180deg,#fff, #fbfdff) }
+    .m-bd{ padding:10px 12px; background:#fff }
     .badge-done{ background:#eaffef; border:1px solid #bfeacb; color:#075a2a }
     .match.done{ border-left:4px solid var(--ok) }
 
@@ -125,19 +131,13 @@
     }
     .score-row + .score-row{ border-top:1px solid var(--border) }
     .player-name{
-      font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#0a1228; font-size:.98rem;
+      font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#0a1228; font-size:.95rem;
     }
     .setBox{
-      width:56px; height:46px; border:1px solid var(--border); border-radius:10px;
-      font-size:20px; text-align:center; font-weight:800; letter-spacing:.3px;
+      width:56px; height:44px; border:1px solid var(--border); border-radius:10px;
+      font-size:19px; text-align:center; font-weight:700; letter-spacing:.2px;
       box-shadow:inset 0 1px 0 rgba(0,0,0,.03);
     }
-
-    /* ======= resumen ======= */
-    .sum-card{ border:1px solid var(--border); border-radius:12px; padding:10px; background:#fff }
-    .pill-match{ display:flex; flex-direction:column; gap:6px; border:1px solid var(--border); background:#fff; padding:8px 10px; border-radius:10px; font-size:.93rem; margin:6px 0 }
-    .pm--pending{ border-left:4px solid var(--warn) }
-    .pm--done{ border-left:4px solid var(--ok) }
 
     /* Sub-colapsables de Cruces por IDA/VUELTA */
     details.leg{ border:1px dashed var(--border); border-radius:12px; padding:6px 8px; margin-bottom:10px; background:#fff }
@@ -147,7 +147,7 @@
     /* Mobile tweaks */
     @media (max-width: 560px){
       .score-row{ grid-template-columns: 1fr repeat(3,48px); gap:6px }
-      .setBox{ width:48px; height:42px; font-size:18px }
+      .setBox{ width:48px; height:40px; font-size:18px }
       .mhd .names strong{ max-width:30ch }
     }
   </style>
@@ -163,15 +163,15 @@
     </header>
 
     <nav class="mobile-tabs" id="mobileTabs">
-      <button type="button" data-target="#sec-parejas">👥 Parejas</button>
-      <button type="button" data-target="#sec-cuadros" class="active">🎾 Partidos</button>
-      <button type="button" data-target="#sec-resumen">📋 Resumen</button>
+      <button type="button" data-target="#sec-parejas" class="active">👥 Parejas</button>
+      <button type="button" data-target="#sec-cuadros">🎾 Partidos</button>
+      <!-- <button type="button" data-target="#sec-resumen">📋 Resumen</button> -->
       <button type="button" data-target="#sec-tabla">📊 Tabla</button>
     </nav>
 
-    <!-- PAREJAS (colapsable por defecto) -->
-    <section id="sec-parejas" class="grid mobile-section">
-      <div class="card togglable is-collapsed" id="pairsCard">
+    <!-- PAREJAS (abiertas por defecto) -->
+    <section id="sec-parejas" class="grid mobile-section active">
+      <div class="card togglable" id="pairsCard">
         <div class="hd">
           <strong>➕ Parejas / Jugadoras</strong>
           <span class="small">(clic para mostrar/ocultar)</span>
@@ -189,7 +189,7 @@
 
     <!-- CRUCES (card colapsable + sub-colapsables IDA/VUELTA) -->
     <section id="sec-cuadros" class="grid mobile-section">
-      <div class="card togglable is-collapsed" id="fixtureCard">
+      <div class="card togglable" id="fixtureCard">
         <div class="hd">
           <strong>📆 Cruces</strong>
           <div class="actions">
@@ -220,7 +220,8 @@
       </div>
     </section>
 
-    <!-- RESUMEN -->
+    <!-- RESUMEN (comentado por ahora) -->
+    <!--
     <section id="sec-resumen" class="grid mobile-section">
       <div class="card togglable is-collapsed" id="summaryCard">
         <div class="hd">
@@ -238,12 +239,15 @@
         <div class="bd" id="summary"></div>
       </div>
     </section>
+    -->
 
     <!-- TABLA -->
     <section id="sec-tabla" class="grid mobile-section">
       <div class="card">
         <div class="hd"><strong>📊 Tabla de posiciones</strong>
-          <div class="actions"><button id="resetLocal" class="danger">Reiniciar cache local</button></div>
+          <div class="actions">
+            <!-- <button id="resetLocal" class="danger">Reiniciar cache local</button> -->
+          </div>
         </div>
         <div class="bd">
           <div style="overflow:auto">
@@ -285,12 +289,12 @@
   await reloadAll();
   bindUI();
 
-  // Parejas: card toggle persistente
+  // Parejas: card toggle (abiertas por defecto)
   (function(){
     const card = $('#pairsCard');
     const KEY = 'pairsCollapsed';
     const was = localStorage.getItem(KEY);
-    if(was === null || was === 'true') card.classList.add('is-collapsed'); else card.classList.remove('is-collapsed');
+    if(was === 'true') card.classList.add('is-collapsed'); else card.classList.remove('is-collapsed');
     card.querySelector('.hd').addEventListener('click', ()=>{
       card.classList.toggle('is-collapsed');
       localStorage.setItem(KEY, String(card.classList.contains('is-collapsed')));
@@ -348,7 +352,7 @@
     state.fixtures.vuelta = state.fixtures.ida.map(r=> r.map(p=>[p[1],p[0]]));
 
     populateTeamFilters();
-    renderTeams(); renderCards(); renderSummary(); renderStandings();
+    renderTeams(); renderCards(); renderStandings();
   }
 
   function bindUI(){
@@ -358,25 +362,28 @@
       const ids = state.teams.map(t=>t.id);
       state.fixtures.ida = buildRoundRobin(ids);
       state.fixtures.vuelta = state.fixtures.ida.map(r=> r.map(p=>[p[1],p[0]]));
-      renderCards(); renderSummary();
+      renderCards();
     });
     $('#filterLeg').addEventListener('change', renderCards);
     $('#filterTeam').addEventListener('change', renderCards);
-    $('#sumLeg').addEventListener('change', renderSummary);
-    $('#sumTeam').addEventListener('change', renderSummary);
-    const sumShow = $('#sumShow'); sumShow.checked = !!state.showSummaryResults; sumShow.addEventListener('change', ()=>{ state.showSummaryResults = sumShow.checked; saveLocal(); renderSummary(); });
-    $('#resetLocal').addEventListener('click', ()=>{ if(confirm('¿Borrar caché local?')){ localStorage.removeItem(LS_KEY); location.reload(); } });
+
+    // NO resumen ni reset cache por ahora
+    // document.getElementById('resetLocal')?.addEventListener('click', ...);
 
     // Togglables
     $$('.card.togglable .hd').forEach(h=> h.addEventListener('click', ()=> h.parentElement.classList.toggle('is-collapsed')));
 
     // Tabs mobile
-    const tabs = $$('#mobileTabs button'); const sections = ['#sec-parejas','#sec-cuadros','#sec-resumen','#sec-tabla'].map(s=>$(s));
+    const tabs = $$('#mobileTabs button');
+    const sections = ['#sec-parejas','#sec-cuadros',/*'#sec-resumen',*/'#sec-tabla'].map(s=>$(s));
     function isMobile(){ return window.matchMedia('(max-width:820px)').matches; }
-    function activate(sel){ tabs.forEach(b=>b.classList.toggle('active', b.dataset.target===sel)); sections.forEach(sec=> sec && (sec.classList.toggle('active','#'+sec.id===sel), sec.classList.add('mobile-section'))); }
+    function activate(sel){
+      tabs.forEach(b=>b.classList.toggle('active', b.dataset.target===sel));
+      sections.forEach(sec=> sec && (sec.classList.toggle('active','#'+sec.id===sel), sec.classList.add('mobile-section')));
+    }
     tabs.forEach(btn=> btn.addEventListener('click', ()=> activate(btn.dataset.target)));
     window.addEventListener('resize', ()=>{ if(!isMobile()){ sections.forEach(sec=>sec && sec.classList.add('active')); } });
-    if(isMobile()) activate('#sec-cuadros'); else sections.forEach(sec=>sec && sec.classList.add('active'));
+    if(isMobile()) activate('#sec-parejas'); else sections.forEach(sec=>sec && sec.classList.add('active'));
   }
 
   async function onAddTeam(){
@@ -400,12 +407,12 @@
     const html = state.teams.map((t,i)=>`
       <div class="row" style="align-items:center; display:flex; justify-content:space-between; gap:8px; padding:6px 0">
         <div class="col-10" style="flex:1 1 auto">
-          <strong style="font-size:.98rem">${escapeHtml(t.name)}</strong> <span class="small">· #${i+1}</span>
+          <strong style="font-size:.95rem">${escapeHtml(t.name)}</strong> <span class="small">· #${i+1}</span>
         </div>
         <div class="col-2 actions" style="flex:0 0 auto">
-          <button class="ghost" onclick="moveTeam(${i},-1)">↑</button>
-          <button class="ghost" onclick="moveTeam(${i},1)">↓</button>
-          <button class="danger" onclick="removeTeam('${t.id}')">Eliminar</button>
+          <button class="icon-btn" title="Subir" onclick="moveTeam(${i},-1)">↑</button>
+          <button class="icon-btn" title="Bajar" onclick="moveTeam(${i},1)">↓</button>
+          <button class="icon-btn" title="Eliminar pareja" onclick="removeTeam('${t.id}')">🗑️</button>
         </div>
       </div>`).join('');
     list.innerHTML = html || '<span class="small">Sin parejas</span>';
@@ -436,14 +443,12 @@
   };
 
   function populateTeamFilters(){
-    const ft = $('#filterTeam'), st = $('#sumTeam');
+    const ft = $('#filterTeam');
     const curFt = ft?.value || 'ALL';
-    const curSt = st?.value || 'ALL';
     const opts = ['<option value="ALL">Todas</option>']
       .concat(state.teams.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`))
       .join('');
     if(ft){ ft.innerHTML = opts; if(Array.from(ft.options).some(o=>o.value===curFt)) ft.value = curFt; }
-    if(st){ st.innerHTML = opts; if(Array.from(st.options).some(o=>o.value===curSt)) st.value = curSt; }
   }
 
   /* ======= Helpers marcador ======= */
@@ -470,10 +475,10 @@
     const head = `
       <div class="mhd">
         <div class="names">🎾 <span class="pill">A</span> <strong>${A}</strong>
-          <span style="opacity:.5">|</span> <span class="pill">B</span> <strong>${B}</strong>
+          <span style="opacity:.45">|</span> <span class="pill">B</span> <strong>${B}</strong>
         </div>
         <div class="meta">
-          ${dateVal ? `<span class="pill">📅 ${dateVal}</span>` : ``}
+          ${dateVal ? `<span class="pill">📅 ${dateVal}</span>` : `<span class="pill" style="opacity:.7">📅 sin fecha</span>`}
           ${sets.length ? `<span class="pill">🧾 ${setSummaryText(sets)}</span>` : ``}
           ${isDone ? `<span class="pill badge-done">✓ Hecho</span>` : ``}
         </div>
@@ -481,6 +486,11 @@
 
     const body = `
       <div class="m-bd">
+        <div class="actions" style="justify-content:flex-end; gap:8px; margin-bottom:8px">
+          <label class="small" style="display:flex; align-items:center; gap:6px">
+            📅 <input type="date" id="date_${uniq}" value="${dateVal||''}" style="width:auto">
+          </label>
+        </div>
         <div class="score-row">
           <div class="player-name">A: ${A}</div>
           ${makeSetCells(uniq,0,sets,'A')}
@@ -493,9 +503,13 @@
           ${makeSetCells(uniq,1,sets,'B')}
           ${makeSetCells(uniq,2,sets,'B')}
         </div>
-        <div class="actions" style="justify-content:space-between; margin-top:10px">
-          ${isDone ? `<button class="danger" onclick="deleteMatch('${uniq}')">Eliminar</button>` : '<span></span>'}
-          <button class="ok" onclick="saveCard('${aId}','${bId}','${leg}',${ri},${idx})">${isDone?'Actualizar':'Guardar'}</button>
+        <div class="actions" style="justify-content:flex-end; gap:8px; margin-top:10px">
+          ${isDone ? `
+            <button class="icon-btn" title="Borrar resultado" onclick="deleteMatch('${uniq}')">🗑️</button>
+            <button class="icon-btn" title="Actualizar resultado" onclick="saveCard('${aId}','${bId}','${leg}',${ri},${idx})">↻</button>
+          ` : `
+            <button class="ok" style="width:auto" title="Guardar" onclick="saveCard('${aId}','${bId}','${leg}',${ri},${idx})">💾 Guardar</button>
+          `}
         </div>
       </div>`;
 
@@ -509,7 +523,7 @@
   function legBlock(rounds, leg){
     const teamFilter = $('#filterTeam')?.value || 'ALL';
     const pairs = rounds.flat();
-    const filtered = (teamFilter==='ALL') ? pairs : pairs.filter(([x,y])=> x===teamFilter || y===teamFilter);
+       const filtered = (teamFilter==='ALL') ? pairs : pairs.filter(([x,y])=> x===teamFilter || y===teamFilter);
     const gamesSorted = filtered.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
 
     const inner = gamesSorted.map((g)=>{
@@ -545,6 +559,20 @@
     bindAutoAdvance(document);
     // Badge hechos
     updateLegBadges();
+
+    // Bind cambios de fecha
+    $$('input[id^="date_"]').forEach(inp=>{
+      inp.addEventListener('change', async function(){
+        const uniq = this.id.replace('date_','');
+        const rec = state.matches.find(x=>x.uniq===uniq);
+        if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderCards(); }
+        else {
+          // si aún no existe en Supabase, dejamos solo la pill "sin fecha" hasta guardar sets
+          const pill = this.closest('.m-bd')?.previousElementSibling?.querySelector('.meta .pill');
+          if(pill) pill.textContent = this.value ? `📅 ${this.value}` : '📅 sin fecha';
+        }
+      });
+    });
   }
 
   function updateLegBadges(){
@@ -614,11 +642,15 @@
     let ptsA=0, ptsB=0; if(winner==='A'){ ptsA+=3; if(vals.length===3) ptsB+=0.5; } else { ptsB+=3; if(vals.length===3) ptsA+=0.5; }
 
     let rec = state.matches.find(m=>m.uniq===uniq);
-    const base = { uniq, A:a, B:b, leg, round:ri+1, sets: vals, ptsA, ptsB, date: (rec && rec.date) || null };
+    // fecha tomada del input (si la hay)
+    const dateInput = document.getElementById(`date_${uniq}`);
+    const chosenDate = dateInput?.value || (rec && rec.date) || null;
+
+    const base = { uniq, A:a, B:b, leg, round:ri+1, sets: vals, ptsA, ptsB, date: chosenDate };
     if(rec){ Object.assign(rec, base); } else { rec = { id: uid(), ...base }; state.matches.push(rec); }
     await upsertMatch(rec);
 
-    renderStandings(); renderSummary(); renderCards();
+    renderStandings(); renderCards();
   };
 
   async function upsertMatch(rec){
@@ -643,7 +675,7 @@
     }
     state.matches = state.matches.filter(m=>m.uniq!==uniq);
     saveLocal();
-    renderStandings(); renderSummary(); renderCards();
+    renderStandings(); renderCards();
   };
 
   /* ======= Tabla ======= */
@@ -663,81 +695,16 @@
       || `<tr><td colspan="9" class="small">Sin datos</td></tr>`;
   }
 
-  /* ======= Resumen ======= */
-  function renderSummary(){
-    const box = $('#summary');
-    const legFilter = $('#sumLeg').value || 'ALL';
-    const teamFilter = $('#sumTeam').value || 'ALL';
-    const showResults = $('#sumShow').checked;
-    const legs=[];
-    if(legFilter==='ALL' || legFilter==='ida') legs.push(['IDA', state.fixtures.ida, 'ida']);
-    if(legFilter==='ALL' || legFilter==='vuelta') legs.push(['VUELTA', state.fixtures.vuelta, 'vuelta']);
-
-    const makeBlock = (title, rounds, leg)=>{
-      if(!rounds || !rounds.length) return '';
-      const pairs = rounds.flat();
-      const filtered = (teamFilter==='ALL') ? pairs : pairs.filter(([x,y])=> x===teamFilter || y===teamFilter);
-      const gamesSorted = filtered.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
-      const items = gamesSorted.map(pair=>{
-        let ri=0, idx=0, found=false;
-        for(let r=0; r<rounds.length && !found; r++){
-          const j = rounds[r].findIndex(p=> (p[0]===pair[0] && p[1]===pair[1]) || (p[0]===pair[1] && p[1]===pair[0]));
-          if(j>-1){ ri=r; idx=j; found=true; }
-        }
-        const [a,b] = (indexOfTeam(pair[0])<=indexOfTeam(pair[1]))? [pair[0],pair[1]] : [pair[1],pair[0]];
-        const uniq = [a,b].slice().sort().join('__')+'_'+leg+'_'+ri+'_'+idx;
-        const rec = state.matches.find(m=>m.uniq===uniq);
-        const aN = escapeHtml(teamName(a)); const bN = escapeHtml(teamName(b));
-        let labA = aN, labB = bN, chip='';
-        if(rec && showResults){
-          const winA = rec.ptsA>rec.ptsB, winB = rec.ptsB>rec.ptsA;
-          if(winA) labA = '<span class="win">🏅 <strong>'+labA+'</strong></span>';
-          if(winB) labB = '<span class="win">🏅 <strong>'+labB+'</strong></span>';
-          const setsTxt = (rec.sets||[]).map(ab=> `${(ab[0]||0)}-${(ab[1]||0)}`).join(', ');
-          if(setsTxt) chip = '<div class="small">🧾 <span class="pill">'+setsTxt+'</span></div>';
-        }
-        const dateVal = toDateInputValue((rec||{}).date);
-        return `<div class="pill-match ${rec ? 'pm--done' : 'pm--pending'}" id="pill_${uniq}">
-            <div class="small" style="display:flex; justify-content:flex-end; gap:6px; align-items:center">
-              <span>📅</span> <input type="date" id="sum_${uniq}" value="${dateVal||''}" style="width:auto">
-            </div>
-            <div class="pm-title">🎾 <span class="pill">A</span> <strong>${labA}</strong> <span style="opacity:.6">|</span>
-              <span class="pill">B</span> <strong>${labB}</strong></div>
-            ${chip}
-            <div class="actions" style="justify-content:center; margin-top:6px"><button class="ghost" onclick="openMatch('${uniq}')">Ir al partido</button></div>
-          </div>`;
-      }).join('');
-      return `<div class="sum-card"><h4 style="margin:0 0 8px 0">${title}</h4>${items || '<span class="small">(sin partidos)</span>'}</div>`;
-    };
-
-    box.innerHTML = `<div class="sum-grid">${legs.map(([t,r,k])=>makeBlock(t,r,k)).join('')}</div>`;
-
-    $$('#summary input[type="date"]').forEach(inp=>{
-      inp.addEventListener('change', async function(){
-        const uniq = this.id.replace('sum_','');
-        const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderCards(); }
-      });
-    });
-  }
-
-  window.openMatch = function(uniq){
-    try{
-      const d = document.querySelector(`details.match summary + .m-bd input[id^="${uniq}_s1a"]`)?.closest('details.match');
-      const target = d;
-      if(!target){ alert('No encontré la card del partido.'); return; }
-      target.open = true;
-      target.scrollIntoView({behavior:'smooth', block:'center'}); target.classList.add('flash');
-      setTimeout(()=> target.classList.remove('flash'), 1200);
-    }catch(e){ console.error(e); }
-  };
+  // (Resumen deshabilitado por ahora)
 
   function initTabs(){
-    const tabs = $$('#mobileTabs button'); const sections = ['#sec-parejas','#sec-cuadros','#sec-resumen','#sec-tabla'].map(s=>$(s));
+    const tabs = $$('#mobileTabs button');
+    const sections = ['#sec-parejas','#sec-cuadros',/*'#sec-resumen',*/'#sec-tabla'].map(s=>$(s));
     function isMobile(){ return window.matchMedia('(max-width:820px)').matches; }
     function activate(sel){ tabs.forEach(b=>b.classList.toggle('active', b.dataset.target===sel)); sections.forEach(sec=> sec && (sec.classList.toggle('active','#'+sec.id===sel), sec.classList.add('mobile-section'))); }
     tabs.forEach(btn=> btn.addEventListener('click', ()=> activate(btn.dataset.target)));
     window.addEventListener('resize', ()=>{ if(!isMobile()){ sections.forEach(sec=>sec && sec.classList.add('active')); } });
-    if(isMobile()) activate('#sec-cuadros'); else sections.forEach(sec=>sec && sec.classList.add('active'));
+    if(isMobile()) activate('#sec-parejas'); else sections.forEach(sec=>sec && sec.classList.add('active'));
   }
   </script>
 </body>
