@@ -571,3 +571,178 @@
         ...card.querySelectorAll('input[id$="_s2a"]'),
         ...card.querySelectorAll('input[id$="_s1b"]'),
         ...card.querySelectorAll('input[id$="_s2b"]'),
+        ...card.querySelectorAll('input[id$="_s3a"]'),
+        ...card.querySelectorAll('input[id$="_s3b"]'),
+      ];
+      order.push(...cardInputs);
+    });
+
+    order.forEach((el,idx)=>{
+      el.addEventListener('input', ()=>{
+        if(String(el.value).length>=1){
+          const next = order[idx+1];
+          if(next) next.focus();
+        }
+      });
+      el.addEventListener('keydown', (e)=>{
+        if(e.key==='Enter'){ e.preventDefault(); const next = order[idx+1]; if(next) next.focus(); }
+        if(e.key==='ArrowLeft' && el.selectionStart===0){ const prev = order[idx-1]; if(prev){ e.preventDefault(); prev.focus(); } }
+        if(e.key==='ArrowRight' && el.selectionStart===String(el.value).length){ const next = order[idx+1]; if(next){ e.preventDefault(); next.focus(); } }
+      });
+    });
+  }
+
+  window.saveCard = async (a,b,leg,ri,idx)=>{
+    const pair = [a,b].slice().sort().join('__'); const uniq = `${pair}_${leg}_${ri}_${idx}`;
+    const get = id => document.getElementById(id);
+
+    const vals = [[uniq+'_s1a',uniq+'_s1b'],[uniq+'_s2a',uniq+'_s2b'],[uniq+'_s3a',uniq+'_s3b']]
+      .map(ids=>[Number(get(ids[0]).value)||0, Number(get(ids[1]).value)||0])
+      .filter(ab=>ab[0]>0 || ab[1]>0);
+
+    if(vals.length<2){ alert('Carga al menos dos sets'); return; }
+
+    const sw = vals.reduce((acc,ab)=>{ if(ab[0]>ab[1]) acc.a++; else if(ab[1]>ab[0]) acc.b++; return acc; }, {a:0,b:0});
+    if(sw.a===sw.b && vals.length<3){ alert('Empate a sets, falta el 3er set'); return; }
+    const winner = sw.a>sw.b? 'A':'B';
+    let ptsA=0, ptsB=0; if(winner==='A'){ ptsA+=3; if(vals.length===3) ptsB+=0.5; } else { ptsB+=3; if(vals.length===3) ptsA+=0.5; }
+
+    let rec = state.matches.find(m=>m.uniq===uniq);
+    const base = { uniq, A:a, B:b, leg, round:ri+1, sets: vals, ptsA, ptsB, date: (rec && rec.date) || null }; // fecha se edita en Resumen
+    if(rec){ Object.assign(rec, base); } else { rec = { id: uid(), ...base }; state.matches.push(rec); }
+    await upsertMatch(rec);
+
+    renderMatches(); renderStandings(); renderSummary(); renderCards(); // refrescar para “✓ Hecho” y chips
+  };
+
+  async function upsertMatch(rec){
+    if(supabase){
+      const payload = { league_id: LEAGUE_ID, uniq: rec.uniq, leg: rec.leg, round: rec.round,
+        team_a: rec.A, team_b: rec.B, date: rec.date, wo: false, sets: rec.sets, pts_a: rec.ptsA, pts_b: rec.ptsB };
+      const { data, error } = await supabase.from('matches').upsert(payload).select('*').single();
+      if(error){ console.warn(error); alert('No se pudo guardar en Supabase'); }
+      else { rec.id = data.id; }
+    } else saveLocal();
+  }
+
+  window.deleteMatch = async (id)=>{
+    const rec = state.matches.find(m=>m.id===id || m.uniq===id);
+    if(!rec) return;
+    if(!confirm(`¿Eliminar R${rec.round} ${teamName(rec.A)} vs ${teamName(rec.B)}?`)) return;
+    if(supabase){
+      await supabase.from('matches').delete().eq('uniq', rec.uniq).eq('league_id', LEAGUE_ID);
+    }
+    state.matches = state.matches.filter(m=>m.uniq!==rec.uniq);
+    saveLocal();
+    renderMatches(); renderStandings(); renderSummary(); renderCards();
+  };
+
+  function renderMatches(){
+    const root = $('#matches'); if(state.matches.length===0){ root.innerHTML = '<div class="small">Sin partidos</div>'; return; }
+    const fmt = d=>{ if(!d) return ''; const dt=new Date(d); return isNaN(dt)? d : dt.toLocaleDateString(); };
+    root.innerHTML = state.matches.slice().sort((a,b)=> (a.round||0)-(b.round||0) || (a.leg||'ida').localeCompare(b.leg||'ida')).map(m=>{
+      const aN=escapeHtml(teamName(m.A)), bN=escapeHtml(teamName(m.B));
+      const winA = m.ptsA>m.ptsB, winB = m.ptsB>m.ptsA;
+      const aL = winA? '🏅 '+aN : aN; const bL = winB? '🏅 '+bN : bN;
+      const setsTxt = (m.sets||[]).map(ab=> `${(ab[0]||0)}-${(ab[1]||0)}`).join(', ');
+      const when = m.date? ` • <span class="small">${fmt(m.date)}</span>` : '';
+      return `<div class="flex" style="justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border)">
+        <div><div><span class="pill">R${m.round}</span> <strong>${aL}</strong> vs <strong>${bL}</strong>${when}</div><div class="small">Sets: ${setsTxt}</div></div>
+        <div class="actions"><button class="danger" onclick="deleteMatch('${m.id||m.uniq}')">Eliminar</button></div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderStandings(){
+    const stats = {}; state.teams.forEach(t=> stats[t.id]={ id:t.id, name:t.name, PJ:0, PG:0, PP:0, GW:0, GL:0, PTS:0 });
+    state.matches.forEach(m=>{
+      const {A,B,sets,ptsA,ptsB} = m; if(!stats[A]||!stats[B]) return;
+      stats[A].PJ++; stats[B].PJ++; let sA=0,sB=0, gA=0,gB=0;
+      sets.forEach(ab=>{ const a=(ab && ab[0])||0; const b=(ab && ab[1])||0; if(a>b) sA++; else if(b>a) sB++; gA+=a; gB+=b; });
+      stats[A].GW+=gA; stats[A].GL+=gB; stats[B].GW+=gB; stats[B].GL+=gA;
+      if(sA>sB){ stats[A].PG++; stats[B].PP++; } else { stats[B].PG++; stats[A].PP++; }
+      stats[A].PTS+=ptsA; stats[B].PTS+=ptsB;
+    });
+    const arr = state.teams.map(t=>stats[t.id]).filter(Boolean)
+      .sort((x,y)=> (y.PG-x.PG) || (y.GW-x.GW) || (y.PTS-x.PTS));
+    $('#standings tbody').innerHTML = arr.map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(r.name)}</td><td>${r.PJ}</td><td>${r.PG}</td><td>${r.PP}</td><td>${r.GW}</td><td>${r.GL}</td><td>${r.GW-r.GL}</td><td><strong>${(Math.round(r.PTS*10)/10).toFixed(1).replace('.0','')}</strong></td></tr>`).join('')
+      || `<tr><td colspan="9" class="small">Sin datos</td></tr>`;
+  }
+
+  function renderSummary(){
+    const box = $('#summary');
+    const legFilter = $('#sumLeg').value || 'ALL';
+    const roundFilter = $('#sumRound').value || 'ALL';
+    const teamFilter = $('#sumTeam').value || 'ALL';
+    const showResults = $('#sumShow').checked;
+    const legs=[];
+    if(legFilter==='ALL' || legFilter==='ida') legs.push(['IDA', state.fixtures.ida, 'ida']);
+    if(legFilter==='ALL' || legFilter==='vuelta') legs.push(['VUELTA', state.fixtures.vuelta, 'vuelta']);
+
+    const makeBlock = (title, rounds, leg)=>{
+      if(!rounds || !rounds.length) return '';
+      const cards = rounds.map((games,i)=>{
+        if(roundFilter!=='ALL' && i!==Number(roundFilter)-1) return '';
+        const filtered = (teamFilter==='ALL') ? games : games.filter(([x,y])=> x===teamFilter || y===teamFilter);
+        const gamesSorted = filtered.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
+        const items = gamesSorted.map((pair,idx)=>{
+          const [a,b] = (indexOfTeam(pair[0])<=indexOfTeam(pair[1]))? [pair[0],pair[1]] : [pair[1],pair[0]];
+          const uniq = [a,b].slice().sort().join('__')+'_'+leg+'_'+i+'_'+idx;
+          const rec = state.matches.find(m=>m.uniq===uniq);
+          const aN = escapeHtml(teamName(a)); const bN = escapeHtml(teamName(b));
+          let labA = aN, labB = bN, chip='';
+          if(rec && showResults){
+            const winA = rec.ptsA>rec.ptsB, winB = rec.ptsB>rec.ptsA;
+            if(winA) labA = '<span class="win">🏅 <strong>'+labA+'</strong></span>';
+            if(winB) labB = '<span class="win">🏅 <strong>'+labB+'</strong></span>';
+            const setsTxt = (rec.sets||[]).map(ab=> `${(ab[0]||0)}-${(ab[1]||0)}`).join(', ');
+            if(setsTxt) chip = '<div class="small">🧾 <span class="pill">'+setsTxt+'</span></div>';
+          }
+          const dateVal = toDateInputValue((rec||{}).date);
+          return `<div class="pill-match ${rec ? 'pm--done' : 'pm--pending'}" id="pill_${uniq}">
+              <div class="small" style="display:flex; justify-content:flex-end">📅 <input type="date" id="sum_${uniq}" value="${dateVal||''}" style="width:auto"></div>
+              <div class="pm-title">🎾 <span class="pill">A</span> <strong>${labA}</strong> <span style="opacity:.6">|</span>
+                <span class="pill">B</span> <strong>${labB}</strong></div>
+              ${chip}
+              <div class="actions" style="justify-content:center; margin-top:6px"><button class="ghost" onclick="openMatch('${uniq}')">Ir al partido</button></div>
+            </div>`;
+        }).join('');
+        return `<div class="sum-card"><h4><span>${title}</span> · Jornada ${i+1}</h4>${items || '<span class="small">(sin partidos)</span>'}</div>`;
+      }).join('');
+      return cards;
+    };
+
+    box.innerHTML = `<div class="sum-grid">${legs.map(([t,r,k])=>makeBlock(t,r,k)).join('')}</div>`;
+
+    $$('#summary input[type="date"]').forEach(inp=>{
+      inp.addEventListener('change', async function(){
+        const uniq = this.id.replace('sum_','');
+        const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderCards(); renderMatches(); }
+      });
+    });
+  }
+
+  window.openMatch = function(uniq){
+    try{
+      const el = document.querySelector(`details.match summary .mhd`).parentElement;
+      // buscar el details.match exacto por uniq:
+      const d = document.querySelector(`details.match summary + .m-bd input[id^="${uniq}_s1a"]`)?.closest('details.match');
+      const target = d || el;
+      if(!target){ alert('No encontré la card del partido.'); return; }
+      target.open = true;
+      target.scrollIntoView({behavior:'smooth', block:'center'}); target.classList.add('flash');
+      setTimeout(()=> target.classList.remove('flash'), 1200);
+    }catch(e){ console.error(e); }
+  };
+
+  function initTabs(){
+    const tabs = $$('#mobileTabs button'); const sections = ['#sec-parejas','#sec-cuadros','#sec-resumen','#sec-tabla'].map(s=>$(s));
+    function isMobile(){ return window.matchMedia('(max-width:820px)').matches; }
+    function activate(sel){ tabs.forEach(b=>b.classList.toggle('active', b.dataset.target===sel)); sections.forEach(sec=> sec && (sec.classList.toggle('active','#'+sec.id===sel), sec.classList.add('mobile-section'))); }
+    tabs.forEach(btn=> btn.addEventListener('click', ()=> activate(btn.dataset.target)));
+    window.addEventListener('resize', ()=>{ if(!isMobile()){ sections.forEach(sec=>sec && sec.classList.add('active')); } });
+    if(isMobile()) activate('#sec-cuadros'); else sections.forEach(sec=>sec && sec.classList.add('active'));
+  }
+  </script>
+</body>
+</html>
