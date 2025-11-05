@@ -7,57 +7,34 @@
   <meta name="theme-color" content="#ffffff">
   <style>
     :root{
-      --bg:#f6f8fb;
-      --panel:#ffffff;
-      --text:#0e1325;
-      --muted:#606b7f;
-      --border:#e6eaf1;
-      --accent:#22c55e;
-      --accent-ink:#052e1a;
-      --danger:#ef4444;
-      --ok:#22c55e;
-      --warn:#f59e0b;
-      --chip:#f1f5f9;
-      --ink-strong:#0a0f1e;
-      --shadow:0 6px 24px rgba(16,24,40,.06);
-      --radius:16px;
+      --bg:#f6f8fb; --panel:#ffffff; --text:#0e1325; --muted:#606b7f; --border:#e6eaf1;
+      --accent:#22c55e; --accent-ink:#052e1a; --danger:#ef4444; --ok:#22c55e; --warn:#f59e0b;
+      --chip:#f1f5f9; --ink-strong:#0a0f1e; --shadow:0 6px 24px rgba(16,24,40,.06); --radius:16px;
     }
-    *{ box-sizing:border-box }
-    html,body{ height:100% }
+    *{ box-sizing:border-box } html,body{ height:100% }
     body{
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;
-      background: var(--bg);
-      color: var(--text);
-      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
-      font-size: 14.25px;
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;
+      background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      font-size:14.25px;
     }
-    strong{ font-weight:600 }
-    h1,h2{ margin:.2rem 0 }
+    strong{ font-weight:600 } h1,h2{ margin:.2rem 0 }
     h1{ font-size:clamp(1.15rem,2vw,1.8rem); color:var(--ink-strong); font-weight:700 }
     .container{ max-width:1100px; margin:0 auto; padding:20px }
-    .grid{ display:grid; grid-template-columns: 1fr; gap:16px }
-    .card{
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-    }
+    .grid{ display:grid; grid-template-columns:1fr; gap:16px }
+
+    .card{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow) }
     .card .hd{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:10px 14px;
-      border-bottom:1px solid var(--border);
-      font-size:.94rem;
-      user-select:none;
+      display:flex; align-items:center; justify-content:space-between; padding:10px 14px;
+      border-bottom:1px solid var(--border); font-size:.94rem; user-select:none;
     }
     .card .hd button, .card .hd input, .card .hd select, .card .hd a{ pointer-events:auto }
     .card .bd{ padding:12px 14px }
     .card.is-collapsed .bd{ display:none }
     .card.togglable .hd{ cursor:pointer }
+
     .pill{
-      display:inline-flex; gap:.45rem; align-items:center;
-      padding:.28rem .55rem; border-radius:999px; background:var(--chip);
-      color:#0c1529; font-size:.8rem; border:1px solid var(--border);
+      display:inline-flex; gap:.45rem; align-items:center; padding:.28rem .55rem;
+      border-radius:999px; background:var(--chip); color:#0c1529; font-size:.8rem; border:1px solid var(--border);
       white-space:nowrap;
     }
     input,select,button{
@@ -65,139 +42,108 @@
       background:#fff; color:#0f1220; outline:none; font-size:.9rem;
     }
     input[type='text'], input[type='number'], select, button{ width:100% }
-    input[type=number]::-webkit-outer-spin-button,
-    input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0 }
+    input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0 }
     input[type=number]{ -moz-appearance:textfield }
     .actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
     .primary{ background:var(--accent); color:var(--accent-ink); border:none; font-weight:700 }
-    .ghost{ background:#fff }
-    .danger{ background:var(--danger); color:#fff; border:none }
+    .ghost{ background:#fff } .danger{ background:var(--danger); color:#fff; border:none }
     .ok{ background:var(--ok); color:#052e1a; border:none; font-weight:700 }
     .icon-btn{
-      width:36px; height:36px; border:1px solid var(--border); border-radius:10px;
-      background:#fff; display:inline-flex; align-items:center; justify-content:center;
-      font-size:18px; cursor:pointer;
+      width:36px; height:36px; border:1px solid var(--border); border-radius:10px; background:#fff;
+      display:inline-flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer;
     }
     .icon-btn:hover{ box-shadow:0 0 0 2px rgba(0,0,0,.03) inset }
+
     table{ width:100%; border-collapse:collapse; min-width:560px; font-size:.92rem }
     th,td{ padding:8px 8px; border-bottom:1px solid var(--border); text-align:left }
     th{ position:sticky; top:0; background:var(--panel); z-index:1 }
     .small{ font-size:.8rem; color:var(--muted) }
-    .mobile-tabs{ display:none; gap:8px; position:sticky; top:0; z-index:5; padding:8px 0 }
-    .mobile-tabs button{
-      flex:1; padding:10px 12px; border-radius:999px; border:1px solid var(--border);
-      background:#fff; color:#0f1220; font-weight:700; font-size:.95rem;
-    }
-    .mobile-tabs button.active{ background:var(--accent); color:var(--accent-ink); border-color:transparent }
+
+    /* ===== Tabs móviles: SOLO en mobile ===== */
+    .mobile-tabs{ display:none } /* default: oculto (desktop) */
     .mobile-section{ display:block }
-    @media (max-width: 820px){ .mobile-tabs{display:flex} .mobile-section{display:none} .mobile-section.active{display:block} }
+    @media (max-width: 820px){
+      .mobile-tabs{
+        display:flex; position:sticky; top:0; z-index:5; gap:8px; padding:8px;
+        background:linear-gradient(#f6f8fb,#f6f8fb);
+      }
+      .mobile-tabs button{
+        flex:1; display:flex; align-items:center; justify-content:center; gap:6px;
+        border-radius:999px; border:1px solid var(--border); background:#fff;
+        font-weight:700; font-size:.95rem; padding:10px 12px; box-shadow:0 1px 0 rgba(16,24,40,.03);
+      }
+      .mobile-tabs button.active{ background:var(--ok); color:var(--accent-ink); border-color:transparent }
+      .mobile-section{ display:none } .mobile-section.active{ display:block }
+    }
+
     .flash{ box-shadow:0 0 0 3px var(--accent) inset }
 
-    /* ===== Tarjetitas de cruce (base) ===== */
+    /* ===== Tarjetas de cruces ===== */
     .games-grid{
       display:grid; gap:12px; margin-top:10px;
-      grid-template-columns: repeat(2, minmax(320px, 1fr));
+      grid-template-columns:repeat(2, minmax(320px, 1fr));
     }
-    @media (max-width: 720px){
-      .games-grid{ grid-template-columns: 1fr }
-    }
+    @media (max-width: 960px){ .games-grid{ grid-template-columns:1fr } }
+
     details.match{
-      border:1px solid var(--border); border-radius:14px; background:#fff; overflow:hidden;
+      border:1px solid #e8eef6; border-radius:16px; background:#fff; overflow:hidden;
       transition:box-shadow .15s ease, border-color .15s ease;
     }
-    details.match[open]{ box-shadow:0 6px 22px rgba(16,24,40,.08) }
     details.match > summary{
-      list-style:none; cursor:pointer; padding:12px 14px; display:flex; align-items:center; gap:12px;
+      list-style:none; cursor:pointer; padding:12px 14px; display:flex; align-items:center; gap:12px; background:#f9fafb;
     }
     details.match > summary::-webkit-details-marker{ display:none }
-    .mhd{ display:flex; align-items:center; gap:12px; flex:1; min-width:0 }
-    .mhd .badgeAB{ display:inline-flex; gap:6px }
-    .mhd .names{ display:flex; flex-direction:column; min-width:0; }
-    .mhd .names .line{
-      display:flex; gap:8px; align-items:center; min-width:0;
-      font-size:1rem; color:#0b1227; font-weight:700;
-    }
-    .mhd .names .line strong{
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:44ch;
-    }
-    .mhd .vs{ margin:0 4px; opacity:.5; font-weight:700 }
-    .mhd .meta{ margin-left:auto; display:flex; gap:6px; align-items:center; flex-wrap:wrap }
-    .m-bd{ padding:12px 14px; background:linear-gradient(180deg,#fff, #fbfdff) }
+    details.match:hover{ border-color:#d8e6f8 }
+    details.match[open]{ box-shadow:0 10px 26px rgba(16,24,40,.10); border-color:#cfe2fb; position:relative }
+    details.match[open]::before{ content:""; position:absolute; inset:0 0 0 auto; left:0; width:4px; border-radius:16px 0 0 16px; background:var(--ok) }
     .badge-done{ background:#eaffef; border:1px solid #bfeacb; color:#075a2a }
     .match.done{ border-left:4px solid var(--ok) }
 
-    /* Sets dentro de la tarjeta */
+    .mhd{ display:flex; align-items:center; gap:12px; flex:1; min-width:0 }
+    .mhd .badgeAB{ display:inline-flex; gap:6px }
+    .mhd .names{ display:flex; flex-direction:column; min-width:0 }
+    .mhd .names .line{ display:flex; gap:8px; align-items:center; min-width:0; font-size:1rem; color:#0b1227; font-weight:800 }
+    .mhd .names .line strong{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:44ch }
+    .mhd .vs{ margin:0 4px; opacity:.35; font-weight:800 }
+    .mhd .meta{ margin-left:auto; display:flex; gap:6px; align-items:center; flex-wrap:wrap }
+    .m-bd{ padding:12px 14px; background:linear-gradient(180deg,#fff,#fbfdff) }
+
+    /* Sets */
     .score-row{
-      display:grid; grid-template-columns: 1fr repeat(3,58px); gap:8px; align-items:center;
-      padding:6px 0;
+      display:grid; grid-template-columns:1fr repeat(3,58px); gap:8px; align-items:center; padding:6px 0;
     }
     .score-row + .score-row{ border-top:1px solid var(--border) }
-    .player-name{
-      font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#0a1228; font-size:.95rem;
-    }
+    .player-name{ font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#0a1228; font-size:.95rem }
     .setBox{
       width:58px; height:46px; border:1px solid var(--border); border-radius:10px;
-      font-size:20px; text-align:center; font-weight:700; letter-spacing:.2px;
-      box-shadow:inset 0 1px 0 rgba(0,0,0,.03);
+      font-size:20px; text-align:center; font-weight:700; letter-spacing:.2px; box-shadow:inset 0 1px 0 rgba(0,0,0,.03);
+    }
+
+    /* ===== MODO MÓVIL: header de tarjeta en dos líneas y chips compactas ===== */
+    @media (max-width: 600px){
+      details.match > summary{
+        padding:10px 12px; align-items:flex-start; gap:10px;
+        /* apilamos nombre + chips */
+        flex-direction:column;
+      }
+      .mhd{ width:100%; gap:8px }
+      .mhd .badgeAB{ display:none } /* menos ruido */
+      .mhd .names .line{ font-size:1rem }
+      .mhd .names .line strong{ max-width:22ch } /* cortes más agresivos */
+      .mhd .meta{
+        margin-left:0;
+        width:100%;
+        gap:6px;
+      }
+      .pill{ font-size:.74rem; padding:.22rem .46rem }
+      .setBox{ width:52px; height:42px; font-size:18px }
+      .score-row{ grid-template-columns:1fr repeat(3,48px); gap:6px }
     }
 
     /* Sub-colapsables por leg */
     details.leg{ border:1px dashed var(--border); border-radius:12px; padding:6px 8px; margin-bottom:10px; background:#fff }
     details.leg>summary{ list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px; font-weight:700 }
     details.leg>summary::-webkit-details-marker{ display:none }
-
-    @media (max-width: 560px){
-      .score-row{ grid-template-columns: 1fr repeat(3,48px); gap:6px }
-      .setBox{ width:48px; height:40px; font-size:18px }
-      .mhd .names .line strong{ max-width:30ch }
-    }
-
-    /* ===== Mejoras visuales (como la foto) ===== */
-
-    /* Tabs tipo segmentado */
-    .mobile-tabs{
-      position: sticky; top: 0; padding: 8px; z-index: 5;
-      display: flex; gap: 8px; background: linear-gradient(#f6f8fb,#f6f8fb);
-    }
-    .mobile-tabs button{
-      flex: 1; display:flex; align-items:center; justify-content:center; gap:6px;
-      border-radius: 999px; border:1px solid var(--border); background:#fff;
-      font-weight:700; font-size:.95rem; padding: 10px 12px;
-      box-shadow: 0 1px 0 rgba(16,24,40,.03);
-    }
-    .mobile-tabs button.active{
-      background: var(--ok); color: var(--accent-ink); border-color: transparent;
-    }
-
-    /* Tarjetas con look chip y acento al abrir */
-    details.match{ border:1px solid #e8eef6; background:#ffffff; border-radius:16px; }
-    details.match > summary{ background:#f9fafb }
-    details.match:hover{ border-color:#d8e6f8 }
-    details.match[open]{
-      box-shadow:0 10px 26px rgba(16,24,40,.10);
-      border-color:#cfe2fb; position:relative;
-    }
-    details.match[open]::before{
-      content:""; position:absolute; inset:0 0 0 auto;
-      left:0; width:4px; border-radius:16px 0 0 16px; background: var(--ok);
-    }
-    .pill{
-      background:#f1f5f9; border-color:#e6eaf1; padding:.30rem .6rem; border-radius:999px;
-    }
-    .mhd .names .line{ font-size:1.06rem; font-weight:800 }
-    .mhd .vs{ opacity:.35; font-weight:800 }
-
-    /* Una sola columna hasta 960px */
-    .games-grid{ grid-template-columns: repeat(2, minmax(320px, 1fr)); }
-    @media (max-width: 960px){
-      .games-grid{ grid-template-columns: 1fr; }
-    }
-    .setBox{ width:60px; height:48px; font-size:20px }
-    @media (max-width: 560px){
-      .setBox{ width:52px; height:44px; font-size:18px }
-    }
-    .badge-done{ background:#eaffef; border:1px solid #bfeacb; color:#075a2a }
-    .match.done{ border-left:4px solid var(--ok) }
   </style>
 </head>
 <body>
@@ -213,7 +159,6 @@
     <nav class="mobile-tabs" id="mobileTabs">
       <button type="button" data-target="#sec-parejas" class="active">👥 Parejas</button>
       <button type="button" data-target="#sec-cuadros">🎾 Partidos</button>
-      <!-- <button type="button" data-target="#sec-resumen">📋 Resumen</button> -->
       <button type="button" data-target="#sec-tabla">📊 Tabla</button>
     </nav>
 
@@ -254,7 +199,6 @@
           <div class="small" style="margin-bottom:8px">Con <strong>7</strong> parejas hay <strong>21</strong> partidos por leg. Con 8 parejas, <strong>28</strong>.</div>
           <div id="fixtureInfo" class="small"></div>
 
-          <!-- Sub-colapsables por leg -->
           <details class="leg" id="leg-ida" open>
             <summary>🅰️ IDA <span class="small" id="badgeIda"></span></summary>
             <div id="cardsIda"></div>
@@ -271,11 +215,7 @@
     <!-- TABLA -->
     <section id="sec-tabla" class="grid mobile-section">
       <div class="card">
-        <div class="hd"><strong>📊 Tabla de posiciones</strong>
-          <div class="actions">
-            <!-- <button id="resetLocal" class="danger">Reiniciar cache local</button> -->
-          </div>
-        </div>
+        <div class="hd"><strong>📊 Tabla de posiciones</strong></div>
         <div class="bd">
           <div style="overflow:auto">
             <table id="standings"><thead><tr>
@@ -316,26 +256,17 @@
   await reloadAll();
   bindUI();
 
-  // ===== PAREJAS: estado inicial + toggle con persistencia (ÚNICO)
-  (function initPairsCollapsed(){
-    const card = document.getElementById('pairsCard');
-    const was = localStorage.getItem('pairsCollapsed');
-    if(card){
-      if(was === 'true') card.classList.add('is-collapsed');
-      else card.classList.remove('is-collapsed');
-    }
-  })();
-
-  $$('.card.togglable .hd').forEach(h=>{
-    h.addEventListener('click', (e)=>{
-      if(e.target.closest('button, input, select, a')) return; // no colapsar si clic en controles
-      const card = h.parentElement;
+  /* PAREJAS: toggle con persistencia */
+  (function(){
+    const card = $('#pairsCard'); const header = $('#pairsHeader'); const KEY = 'pairsCollapsed';
+    const was = localStorage.getItem(KEY);
+    if(was === 'true') card.classList.add('is-collapsed'); else card.classList.remove('is-collapsed');
+    header.addEventListener('click', (e)=>{
+      if(e.target.closest('button, input, select, a')) return;
       card.classList.toggle('is-collapsed');
-      if(card.id === 'pairsCard'){
-        localStorage.setItem('pairsCollapsed', String(card.classList.contains('is-collapsed')));
-      }
+      localStorage.setItem(KEY, String(card.classList.contains('is-collapsed')));
     });
-  });
+  })();
 
   function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch{} }
   function loadLocal(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch{ return null; } }
@@ -351,13 +282,8 @@
   function buildRoundRobin(ids){
     const arr = ids.slice(); if(arr.length%2===1) arr.push('BYE'); const n = arr.length; const rounds=[];
     for(let r=0; r<n-1; r++){
-      const round=[];
-      for(let i=0;i<n/2;i++){
-        const a=arr[i], b=arr[n-1-i];
-        if(a!=='BYE' && b!=='BYE') round.push([a,b]);
-      }
-      rounds.push(round);
-      arr.splice(1,0,arr.pop());
+      const round=[]; for(let i=0;i<n/2;i++){ const a=arr[i], b=arr[n-1-i]; if(a!=='BYE' && b!=='BYE') round.push([a,b]); }
+      rounds.push(round); arr.splice(1,0,arr.pop());
     }
     return rounds;
   }
@@ -403,9 +329,17 @@
     $('#filterLeg').addEventListener('change', renderCards);
     $('#filterTeam').addEventListener('change', renderCards);
 
-    // Tabs mobile
+    // Toggle genérico de cards
+    $$('.card.togglable .hd').forEach(h=>{
+      h.addEventListener('click', (e)=>{
+        if(e.target.closest('button, input, select, a')) return;
+        h.parentElement.classList.toggle('is-collapsed');
+      });
+    });
+
+    // Tabs móviles
     const tabs = $$('#mobileTabs button');
-    const sections = ['#sec-parejas','#sec-cuadros',/*'#sec-resumen',*/'#sec-tabla'].map(s=>$(s));
+    const sections = ['#sec-parejas','#sec-cuadros','#sec-tabla'].map(s=>$(s));
     function isMobile(){ return window.matchMedia('(max-width:820px)').matches; }
     function activate(sel){
       tabs.forEach(b=>b.classList.toggle('active', b.dataset.target===sel));
@@ -425,11 +359,9 @@
       if(error){ alert('No se pudo guardar en Supabase'); console.warn(error); return; }
       state.teams.push({ id:data.id, name:data.name, position:data.position });
     }else{
-      state.teams.push({ id: uid(), name, position });
-      saveLocal();
+      state.teams.push({ id: uid(), name, position }); saveLocal();
     }
-    $('#teamName').value='';
-    await reloadAll();
+    $('#teamName').value=''; await reloadAll();
   }
 
   function renderTeams(){
@@ -473,15 +405,12 @@
   };
 
   function populateTeamFilters(){
-    const ft = $('#filterTeam');
-    const curFt = ft?.value || 'ALL';
-    const opts = ['<option value="ALL">Todas</option>']
-      .concat(state.teams.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`))
-      .join('');
+    const ft = $('#filterTeam'); const curFt = ft?.value || 'ALL';
+    const opts = ['<option value="ALL">Todas</option>'].concat(state.teams.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`)).join('');
     if(ft){ ft.innerHTML = opts; if(Array.from(ft.options).some(o=>o.value===curFt)) ft.value = curFt; }
   }
 
-  /* ===== Helpers marcador ===== */
+  /* Helpers de marcador */
   function makeSetCells(uniq, i, sets, side){
     const val = (sets[i] && sets[i][side==='A'?0:1]) || '';
     const id  = `${uniq}_s${i+1}${side.toLowerCase()}`;
@@ -492,21 +421,18 @@
     return sets.map(ab=> `${(ab[0]||0)}-${(ab[1]||0)}`).join(', ');
   }
 
-  /* ===== Tarjetita de partido ===== */
+  /* Tarjeta individual */
   function makeCard(a,b,leg,ri,idx){
-    const ia=indexOfTeam(a), ib=indexOfTeam(b); const aId= (ia<=ib)? a:b, bId=(ia<=ib)? b:a;
+    const ia=indexOfTeam(a), ib=indexOfTeam(b); const aId=(ia<=ib)?a:b, bId=(ia<=ib)?b:a;
     const A = escapeHtml(teamName(aId)); const B = escapeHtml(teamName(bId));
     const uniq = [aId,bId].slice().sort().join('__')+'_'+leg+'_'+ri+'_'+idx;
     const existing = state.matches.find(m=>m.uniq===uniq) || {};
-    const sets = existing.sets || [];
-    const dateVal = toDateInputValue(existing.date);
+    const sets = existing.sets || []; const dateVal = toDateInputValue(existing.date);
     const isDone = !!existing.id || !!existing.uniq;
 
     const head = `
       <div class="mhd">
-        <div class="badgeAB">
-          <span class="pill">A</span><span class="pill">B</span>
-        </div>
+        <div class="badgeAB"><span class="pill">A</span><span class="pill">B</span></div>
         <div class="names">
           <div class="line"><strong>${A}</strong> <span class="vs">vs</span> <strong>${B}</strong></div>
         </div>
@@ -547,12 +473,10 @@
       </div>`;
 
     return `<details class="match ${isDone?'done':''}">
-      <summary>${head}</summary>
-      ${body}
+      <summary>${head}</summary>${body}
     </details>`;
   }
 
-  /* ===== Listado por leg ===== */
   function legBlock(rounds, leg){
     const teamFilter = $('#filterTeam')?.value || 'ALL';
     const pairs = rounds.flat();
@@ -577,40 +501,28 @@
     const showIda = (legFilter==='ALL' || legFilter==='ida');
     const showVuelta = (legFilter==='ALL' || legFilter==='vuelta');
 
-    if(showIda){
-      $('#cardsIda').innerHTML = `<div class="games-grid">${legBlock(ida,'ida')}</div>`;
-      $('#badgeIda').textContent = '';
-    } else { $('#cardsIda').innerHTML=''; }
-    if(showVuelta){
-      $('#cardsVuelta').innerHTML = `<div class="games-grid">${legBlock(vuelta,'vuelta')}</div>`;
-      $('#badgeVuelta').textContent = '';
-    } else { $('#cardsVuelta').innerHTML=''; }
+    if(showIda){ $('#cardsIda').innerHTML = `<div class="games-grid">${legBlock(ida,'ida')}</div>`; $('#badgeIda').textContent = ''; }
+    else { $('#cardsIda').innerHTML=''; }
+    if(showVuelta){ $('#cardsVuelta').innerHTML = `<div class="games-grid">${legBlock(vuelta,'vuelta')}</div>`; $('#badgeVuelta').textContent = ''; }
+    else { $('#cardsVuelta').innerHTML=''; }
 
-    makeAccordion('#cardsIda, #cardsVuelta');          // acordeón (solo una abierta)
-    bindAutoAdvancePerCard('#cardsIda, #cardsVuelta');  // auto-avance por tarjeta
+    makeAccordion('#cardsIda, #cardsVuelta');
+    bindAutoAdvancePerCard('#cardsIda, #cardsVuelta');
     updateLegBadges();
     bindDateChanges();
   }
 
-  /* ===== Acordeón: solo una tarjeta abierta ===== */
   function makeAccordion(scopeSelector){
     $$(scopeSelector).forEach(scope=>{
       scope.querySelectorAll('details.match > summary').forEach(sum=>{
         sum.addEventListener('click', ()=>{
           const details = sum.parentElement;
-          setTimeout(()=>{
-            if(details.open){
-              scope.querySelectorAll('details.match').forEach(d=>{
-                if(d !== details) d.removeAttribute('open');
-              });
-            }
-          }, 0);
+          setTimeout(()=>{ if(details.open){ scope.querySelectorAll('details.match').forEach(d=>{ if(d!==details) d.removeAttribute('open'); }); } }, 0);
         });
       });
     });
   }
 
-  /* ===== Auto-avance por tarjeta ===== */
   function bindAutoAdvancePerCard(scopeSelector){
     $$(scopeSelector).forEach(scope=>{
       scope.querySelectorAll('details.match').forEach(card=>{
@@ -623,16 +535,11 @@
           ...card.querySelectorAll('input[id$="_s3b"]'),
         ];
         order.forEach((el,idx)=>{
-          el.addEventListener('input', ()=>{
-            if(String(el.value).length>=1){
-              const next = order[idx+1];
-              if(next) next.focus();
-            }
-          });
+          el.addEventListener('input', ()=>{ if(String(el.value).length>=1){ const n=order[idx+1]; if(n) n.focus(); } });
           el.addEventListener('keydown', (e)=>{
-            if(e.key==='Enter'){ e.preventDefault(); const next = order[idx+1]; if(next) next.focus(); }
-            if(e.key==='ArrowLeft' && el.selectionStart===0){ const prev = order[idx-1]; if(prev){ e.preventDefault(); prev.focus(); } }
-            if(e.key==='ArrowRight' && el.selectionStart===String(el.value).length){ const next = order[idx+1]; if(next){ e.preventDefault(); next.focus(); } }
+            if(e.key==='Enter'){ e.preventDefault(); const n=order[idx+1]; if(n) n.focus(); }
+            if(e.key==='ArrowLeft' && el.selectionStart===0){ const p=order[idx-1]; if(p){ e.preventDefault(); p.focus(); } }
+            if(e.key==='ArrowRight' && el.selectionStart===String(el.value).length){ const n=order[idx+1]; if(n){ e.preventDefault(); n.focus(); } }
           });
         });
       });
@@ -642,10 +549,9 @@
   function bindDateChanges(){
     $$('input[id^="date_"]').forEach(inp=>{
       inp.addEventListener('change', async function(){
-        const uniq = this.id.replace('date_','');
-        const rec = state.matches.find(x=>x.uniq===uniq);
+        const uniq = this.id.replace('date_',''); const rec = state.matches.find(x=>x.uniq===uniq);
         if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderCards(); }
-        else {
+        else{
           const pill = this.closest('details.match')?.querySelector('.meta .pill');
           if(pill) pill.textContent = this.value ? `📅 ${this.value}` : '📅 sin fecha';
         }
@@ -655,83 +561,61 @@
 
   function updateLegBadges(){
     const countForLeg = (leg)=>{
-      const rounds = state.fixtures[leg]||[];
-      const total = rounds.reduce((a,r)=>a+r.length,0);
-      let done=0;
-      rounds.forEach((games,ri)=>{
-        games.forEach((g,idx)=>{
-          const ia=indexOfTeam(g[0]), ib=indexOfTeam(g[1]);
-          const aId= (ia<=ib)? g[0]:g[1], bId=(ia<=ib)? g[1]:g[0];
-          const uniq = [aId,bId].slice().sort().join('__')+'_'+leg+'_'+ri+'_'+idx;
-          if(state.matches.find(m=>m.uniq===uniq)) done++;
-        });
-      });
+      const rounds = state.fixtures[leg]||[]; const total = rounds.reduce((a,r)=>a+r.length,0); let done=0;
+      rounds.forEach((games,ri)=>{ games.forEach((g,idx)=>{
+        const ia=indexOfTeam(g[0]), ib=indexOfTeam(g[1]); const aId=(ia<=ib)?g[0]:g[1], bId=(ia<=ib)?g[1]:g[0];
+        const uniq = [aId,bId].slice().sort().join('__')+'_'+leg+'_'+ri+'_'+idx;
+        if(state.matches.find(m=>m.uniq===uniq)) done++;
+      });});
       return {done,total};
     };
-    const a = countForLeg('ida'); const b = countForLeg('vuelta');
+    const a=countForLeg('ida'), b=countForLeg('vuelta');
     $('#badgeIda').textContent = `• Hechos ${a.done}/${a.total}`;
     $('#badgeVuelta').textContent = `• Hechos ${b.done}/${b.total}`;
   }
 
-  /* ===== Guardar/Actualizar (upsert) ===== */
   window.saveCard = async (a,b,leg,ri,idx)=>{
-    const pair = [a,b].slice().sort().join('__'); const uniq = `${pair}_${leg}_${ri}_${idx}`;
-    const get = id => document.getElementById(id);
-
-    const vals = [[uniq+'_s1a',uniq+'_s1b'],[uniq+'_s2a',uniq+'_s2b'],[uniq+'_s3a',uniq+'_s3b']]
+    const pair=[a,b].slice().sort().join('__'); const uniq=`${pair}_${leg}_${ri}_${idx}`;
+    const get=id=>document.getElementById(id);
+    const vals=[[uniq+'_s1a',uniq+'_s1b'],[uniq+'_s2a',uniq+'_s2b'],[uniq+'_s3a',uniq+'_s3b']]
       .map(ids=>[Number(get(ids[0])?.value)||0, Number(get(ids[1])?.value)||0])
       .filter(ab=>ab[0]>0 || ab[1]>0);
-
     if(vals.length<2){ alert('Carga al menos dos sets'); return; }
-
-    const sw = vals.reduce((acc,ab)=>{ if(ab[0]>ab[1]) acc.a++; else if(ab[1]>ab[0]) acc.b++; return acc; }, {a:0,b:0});
+    const sw=vals.reduce((acc,ab)=>{ if(ab[0]>ab[1]) acc.a++; else if(ab[1]>ab[0]) acc.b++; return acc; },{a:0,b:0});
     if(sw.a===sw.b && vals.length<3){ alert('Empate a sets, falta el 3er set'); return; }
-    const winner = sw.a>sw.b? 'A':'B';
-    let ptsA=0, ptsB=0; if(winner==='A'){ ptsA+=3; if(vals.length===3) ptsB+=0.5; } else { ptsB+=3; if(vals.length===3) ptsA+=0.5; }
-
-    let rec = state.matches.find(m=>m.uniq===uniq);
-    const dateInput = document.getElementById(`date_${uniq}`);
-    const chosenDate = dateInput?.value || (rec && rec.date) || null;
-
-    const base = { uniq, A:a, B:b, leg, round:ri+1, sets: vals, ptsA, ptsB, date: chosenDate };
-    if(rec){ Object.assign(rec, base); } else { rec = { id: uid(), ...base }; state.matches.push(rec); }
-    await upsertMatch(rec);
-
-    renderStandings(); renderCards();
+    const winner=sw.a>sw.b?'A':'B'; let ptsA=0,ptsB=0; if(winner==='A'){ ptsA+=3; if(vals.length===3) ptsB+=0.5; } else { ptsB+=3; if(vals.length===3) ptsA+=0.5; }
+    let rec=state.matches.find(m=>m.uniq===uniq); const dateInput=document.getElementById(`date_${uniq}`); const chosenDate=dateInput?.value || (rec && rec.date) || null;
+    const base={ uniq, A:a, B:b, leg, round:ri+1, sets:vals, ptsA, ptsB, date:chosenDate };
+    if(rec){ Object.assign(rec, base); } else { rec={ id:uid(), ...base }; state.matches.push(rec); }
+    await upsertMatch(rec); renderStandings(); renderCards();
   };
 
   async function upsertMatch(rec){
     if(supabase){
-      const payload = { league_id: LEAGUE_ID, uniq: rec.uniq, leg: rec.leg, round: rec.round,
-        team_a: rec.A, team_b: rec.B, date: rec.date, wo: false, sets: rec.sets, pts_a: rec.ptsA, pts_b: rec.ptsB };
+      const payload={ league_id:LEAGUE_ID, uniq:rec.uniq, leg:rec.leg, round:rec.round,
+        team_a:rec.A, team_b:rec.B, date:rec.date, wo:false, sets:rec.sets, pts_a:rec.ptsA, pts_b:rec.ptsB };
       const { data, error } = await supabase.from('matches').upsert(payload).select('*').single();
-      if(error){ console.warn(error); alert('No se pudo guardar en Supabase'); }
-      else { rec.id = data.id; }
+      if(error){ console.warn(error); alert('No se pudo guardar en Supabase'); } else { rec.id=data.id; }
     } else saveLocal();
   }
 
-  /* ===== Eliminar resultado ===== */
   window.deleteMatch = async (uniq)=>{
-    const rec = state.matches.find(m=>m.uniq===uniq);
-    if(!rec){ return; }
+    const rec = state.matches.find(m=>m.uniq===uniq); if(!rec) return;
     if(!confirm(`¿Eliminar resultado de ${teamName(rec.A)} vs ${teamName(rec.B)}?`)) return;
-
     if(supabase){
       const { error } = await supabase.from('matches').delete().eq('league_id', LEAGUE_ID).eq('uniq', uniq);
       if(error){ console.warn(error); alert('No se pudo eliminar en Supabase'); return; }
     }
-    state.matches = state.matches.filter(m=>m.uniq!==uniq);
-    saveLocal();
+    state.matches = state.matches.filter(m=>m.uniq!==uniq); saveLocal();
     renderStandings(); renderCards();
   };
 
-  /* ===== Tabla ===== */
   function renderStandings(){
-    const stats = {}; state.teams.forEach(t=> stats[t.id]={ id:t.id, name:t.name, PJ:0, PG:0, PP:0, GW:0, GL:0, PTS:0 });
+    const stats={}; state.teams.forEach(t=> stats[t.id]={ id:t.id, name:t.name, PJ:0, PG:0, PP:0, GW:0, GL:0, PTS:0 });
     state.matches.forEach(m=>{
-      const {A,B,sets,ptsA,ptsB} = m; if(!stats[A]||!stats[B]) return;
+      const {A,B,sets,ptsA,ptsB}=m; if(!stats[A]||!stats[B]) return;
       stats[A].PJ++; stats[B].PJ++; let sA=0,sB=0, gA=0,gB=0;
-      sets.forEach(ab=>{ const a=(ab && ab[0])||0; const b=(ab && ab[1])||0; if(a>b) sA++; else if(b>a) sB++; gA+=a; gB+=b; });
+      sets.forEach(ab=>{ const a=(ab&&ab[0])||0; const b=(ab&&ab[1])||0; if(a>b) sA++; else if(b>a) sB++; gA+=a; gB+=b; });
       stats[A].GW+=gA; stats[A].GL+=gB; stats[B].GW+=gB; stats[B].GL+=gA;
       if(sA>sB){ stats[A].PG++; stats[B].PP++; } else { stats[B].PG++; stats[A].PP++; }
       stats[A].PTS+=ptsA; stats[B].PTS+=ptsB;
@@ -744,7 +628,7 @@
 
   function initTabs(){
     const tabs = $$('#mobileTabs button');
-    const sections = ['#sec-parejas','#sec-cuadros',/*'#sec-resumen',*/'#sec-tabla'].map(s=>$(s));
+    const sections = ['#sec-parejas','#sec-cuadros','#sec-tabla'].map(s=>$(s));
     function isMobile(){ return window.matchMedia('(max-width:820px)').matches; }
     function activate(sel){ tabs.forEach(b=>b.classList.toggle('active', b.dataset.target===sel)); sections.forEach(sec=> sec && (sec.classList.toggle('active','#'+sec.id===sel), sec.classList.add('mobile-section'))); }
     tabs.forEach(btn=> btn.addEventListener('click', ()=> activate(btn.dataset.target)));
