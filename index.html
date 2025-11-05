@@ -6,36 +6,40 @@
   <title>Liga Femenina – No puedo, tengo pádel</title>
   <meta name="theme-color" content="#ffffff">
   <style>
-    /* ======= TEMA CLARO ======= */
     :root{
-      --bg:#f7f9fb;
+      --bg:#f6f8fb;
       --panel:#ffffff;
-      --text:#0f1220;
-      --muted:#5d667b;
-      --border:#e6e9ef;
-      --accent:#2dd24c;
-      --accent-ink:#0a1b10;
-      --danger:#ff5470;
-      --ok:#2dd24c;
-      --warn:#f6b300;
-      --chip:#f0f3f8;
+      --text:#0e1325;
+      --muted:#606b7f;
+      --border:#e6eaf1;
+      --accent:#22c55e;
+      --accent-ink:#052e1a;
+      --danger:#ef4444;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --chip:#f1f5f9;
+      --ink-strong:#0a0f1e;
+      --shadow:0 6px 24px rgba(16,24,40,.06);
+      --radius:16px;
     }
     *{ box-sizing:border-box }
+    html,body{ height:100% }
     body{
       margin:0;
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;
       background: var(--bg);
       color: var(--text);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
     }
     h1,h2{ margin:.2rem 0 }
-    h1{ font-size:clamp(1.4rem,2.3vw,2.2rem) }
+    h1{ font-size:clamp(1.4rem,2.3vw,2.2rem); color:var(--ink-strong) }
     .container{ max-width:1100px; margin:0 auto; padding:20px }
     .grid{ display:grid; grid-template-columns: 1fr; gap:16px }
     .card{
       background:var(--panel);
       border:1px solid var(--border);
-      border-radius:16px;
-      box-shadow:0 4px 20px rgba(16,24,40,.04);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
     }
     .card .hd{
       display:flex; align-items:center; justify-content:space-between;
@@ -45,49 +49,47 @@
     .card .bd{ padding:14px 16px }
     .pill{
       display:inline-flex; gap:.5rem; align-items:center;
-      padding:.35rem .7rem; border-radius:999px; background:var(--chip);
-      color:#3b4252; font-size:.85rem; border:1px solid var(--border);
+      padding:.38rem .7rem; border-radius:999px; background:var(--chip);
+      color:#0c1529; font-size:.86rem; border:1px solid var(--border);
+      white-space:nowrap;
     }
     input,select,button{
-      padding:8px 10px; border-radius:10px; border:1px solid var(--border);
-      background:#fff; color:#111; outline:none;
+      padding:10px 12px; border-radius:12px; border:1px solid var(--border);
+      background:#fff; color:#0f1220; outline:none; font-size:.95rem;
     }
     input[type='text'], input[type='number'], select, button{ width:100% }
+    /* Ocultar spinners de number */
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0 }
+    input[type=number]{ -moz-appearance:textfield }
     .actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
     .primary{ background:var(--accent); color:var(--accent-ink); border:none; font-weight:700 }
     .ghost{ background:#fff }
     .danger{ background:var(--danger); color:#fff; border:none }
-    .ok{ background:var(--ok); color:#0c1b10; border:none }
-    table{ width:100%; border-collapse:collapse }
-    th,td{ padding:8px 6px; border-bottom:1px solid var(--border); text-align:left }
-    th{ position:sticky; top:0; background:var(--panel) }
-    .small{ font-size:.85rem; color:var(--muted) }
+    .ok{ background:var(--ok); color:#052e1a; border:none; font-weight:700 }
+    table{ width:100%; border-collapse:collapse; min-width:560px }
+    th,td{ padding:10px 8px; border-bottom:1px solid var(--border); text-align:left; font-size:.95rem }
+    th{ position:sticky; top:0; background:var(--panel); z-index:1 }
+    .small{ font-size:.86rem; color:var(--muted) }
     .mobile-tabs{ display:none; gap:8px; position:sticky; top:0; z-index:5; padding:8px 0 }
     .mobile-tabs button{
-      flex:1; padding:10px 12px; border-radius:999px; border:1px solid var(--border);
+      flex:1; padding:12px 14px; border-radius:999px; border:1px solid var(--border);
       background:#fff; color:#0f1220; font-weight:700
     }
     .mobile-tabs button.active{ background:var(--accent); color:var(--accent-ink); border-color:transparent }
     .mobile-section{ display:block }
     @media (max-width: 820px){ .mobile-tabs{display:flex} .mobile-section{display:none} .mobile-section.active{display:block} }
+
     .flash{ box-shadow:0 0 0 3px var(--accent) inset }
 
-    /* ======= Colapsables ======= */
+    /* Colapsables simples */
     .card.is-collapsed .bd{ display:none }
     .card.togglable .hd{ cursor:pointer }
-    .hd .toggle-tip{ font-size:.85rem; color:var(--muted); margin-left:8px }
-
-    /* ======= Jornadas ======= */
-    details.round{ border:1px dashed var(--border); border-radius:12px; padding:6px 10px; background:#fff }
-    details.round>summary{ cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px }
-    details.round>summary::-webkit-details-marker{ display:none }
-    .round-title{ display:flex; align-items:center; gap:8px }
-    .round-badges{ margin-left:auto; display:flex; gap:6px; align-items:center }
 
     /* ======= Grilla de juegos (2 por fila) ======= */
     .games-grid{
-      display:grid; gap:12px; margin-top:10px;
-      grid-template-columns: repeat(2, minmax(300px, 1fr));
+      display:grid; gap:14px; margin-top:10px;
+      grid-template-columns: repeat(2, minmax(320px, 1fr));
     }
     @media (max-width: 720px){
       .games-grid{ grid-template-columns: 1fr }
@@ -95,47 +97,51 @@
 
     /* ======= Juego colapsable ======= */
     details.match{
-      border:1px solid var(--border); border-radius:12px; background:#fff;
-      overflow:hidden;
+      border:1px solid var(--border); border-radius:14px; background:#fff; overflow:hidden;
+      transition:border-color .2s ease;
     }
     details.match > summary{
-      list-style:none; cursor:pointer; padding:10px 12px; display:flex; align-items:center; gap:8px;
+      list-style:none; cursor:pointer; padding:12px 14px; display:flex; align-items:center; gap:8px;
     }
     details.match > summary::-webkit-details-marker{ display:none }
     .mhd{
-      display:flex; align-items:center; gap:8px; flex:1; min-width:0;
+      display:flex; align-items:center; gap:10px; flex:1; min-width:0;
     }
-    .mhd .names{ display:flex; gap:6px; align-items:center; min-width:0; }
-    .mhd .names strong{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:40ch }
-    .mhd .meta{ margin-left:auto; display:flex; gap:6px; align-items:center }
-    .m-bd{ padding:12px }
-    .badge-done{ background:#eaffef; border:1px solid #bfeacb; color:#0c3a1f }
+    .mhd .names{
+      display:flex; gap:8px; align-items:center; min-width:0; font-size:1rem; color:#0b1227
+    }
+    .mhd .names strong{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:36ch }
+    .mhd .meta{ margin-left:auto; display:flex; gap:6px; align-items:center; flex-wrap:wrap }
+    .m-bd{ padding:12px 14px; background:linear-gradient(180deg,#fff, #fbfdff) }
+    .badge-done{ background:#eaffef; border:1px solid #bfeacb; color:#075a2a }
     .match.done{ border-left:4px solid var(--ok) }
 
-    /* ======= MARCADOR COMPACTO ======= */
+    /* ======= Marcador compacto ======= */
     .score-row{
-      display:grid; grid-template-columns: 1fr repeat(3,64px); gap:10px; align-items:center;
+      display:grid; grid-template-columns: 1fr repeat(3,72px); gap:10px; align-items:center;
       padding:8px 0;
     }
     .score-row + .score-row{ border-top:1px solid var(--border) }
-    .player-name{ font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-    .setBox{
-      width:64px; height:56px; border:1px solid var(--border); border-radius:10px;
-      font-size:26px; text-align:center; font-weight:700;
+    .player-name{
+      font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#0a1228
     }
-    .mh-date{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:flex-end }
-    .mh-date .readonly{ opacity:.8 }
+    .setBox{
+      width:72px; height:60px; border:1px solid var(--border); border-radius:12px;
+      font-size:26px; text-align:center; font-weight:800; letter-spacing:.5px;
+      box-shadow:inset 0 1px 0 rgba(0,0,0,.03);
+    }
 
     /* ======= resumen ======= */
     .sum-card{ border:1px solid var(--border); border-radius:12px; padding:12px; background:#fff }
-    .pill-match{ display:flex; flex-direction:column; gap:6px; border:1px solid var(--border); background:#fff; padding:8px 10px; border-radius:10px; font-size:.95rem; margin:6px 0 }
+    .pill-match{ display:flex; flex-direction:column; gap:6px; border:1px solid var(--border); background:#fff; padding:10px 12px; border-radius:12px; font-size:.95rem; margin:6px 0 }
     .pm--pending{ border-left:4px solid var(--warn) }
     .pm--done{ border-left:4px solid var(--ok) }
 
-    /* ======= Mobile tweaks ======= */
+    /* Mobile tweaks */
     @media (max-width: 560px){
-      .score-row{ grid-template-columns: 1fr repeat(3,52px); gap:8px }
-      .setBox{ width:52px; height:48px; font-size:22px }
+      .score-row{ grid-template-columns: 1fr repeat(3,58px); gap:8px }
+      .setBox{ width:58px; height:50px; font-size:22px }
+      .mhd .names strong{ max-width:26ch }
     }
   </style>
 </head>
@@ -144,7 +150,7 @@
     <header class="flex" style="justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:12px">
       <div>
         <h1>🏆 Liga Femenina – <span style="color:#10b981">No puedo, tengo pádel</span></h1>
-        <div class="small">Supabase + caché local. Cruces ida/vuelta, resultados y tabla.</div>
+        <div class="small">Supabase + caché local. Ida/Vuelta, resultados y tabla.</div>
       </div>
       <div class="pill">🌐 Supabase • v11</div>
     </header>
@@ -161,7 +167,7 @@
       <div class="card togglable is-collapsed" id="pairsCard">
         <div class="hd">
           <strong>➕ Parejas / Jugadoras</strong>
-          <span class="small toggle-tip">(clic para mostrar/ocultar)</span>
+          <span class="small">(clic en el encabezado para mostrar/ocultar)</span>
         </div>
         <div class="bd">
           <div class="actions">
@@ -174,47 +180,40 @@
       </div>
     </section>
 
-    <!-- CUADROS -->
+    <!-- CUADROS (sin jornadas: solo IDA y VUELTA) -->
     <section id="sec-cuadros" class="grid mobile-section">
-      <div class="card togglable" id="fixtureCard">
+      <div class="card" id="fixtureCard">
         <div class="hd">
-          <strong>📆 Cuadros (Ida/Vuelta)</strong>
+          <strong>📆 Cruces</strong>
           <div class="actions">
             <button id="regenFixture" class="primary">Regenerar</button>
             <label class="small">Vista:
               <select id="filterLeg" style="width:auto"><option value="ALL">Todo</option><option value="ida">Ida</option><option value="vuelta">Vuelta</option></select>
             </label>
-            <label class="small">Jornada:
-              <select id="filterRound" style="width:auto"><option value="ALL">Todas</option></select>
-            </label>
             <label class="small">Pareja:
-              <select id="filterTeam" style="width:auto; min-width:160px"><option value="ALL">Todas</option></select>
+              <select id="filterTeam" style="width:auto; min-width:200px"><option value="ALL">Todas</option></select>
             </label>
           </div>
         </div>
         <div class="bd">
           <div class="small" style="margin-bottom:8px">Con <strong>7</strong> parejas hay <strong>21</strong> partidos por leg. Con 8 parejas, <strong>28</strong>.</div>
           <div id="fixtureInfo" class="small"></div>
-          <div class="scroll" id="cards"></div>
+          <div id="cards"></div>
         </div>
       </div>
     </section>
 
-    <!-- RESUMEN -->
+    <!-- RESUMEN (sin botón de colapsar ni jornadas) -->
     <section id="sec-resumen" class="grid mobile-section">
-      <div class="card togglable" id="summaryCard">
+      <div class="card" id="summaryCard">
         <div class="hd">
-          <strong>📋 Resumen de Partidos (Ida/Vuelta)</strong>
+          <strong>📋 Resumen</strong>
           <div class="actions">
-            <button id="toggleSummary" class="ghost">Colapsar</button>
             <label class="small">Vista:
               <select id="sumLeg" style="width:auto"><option value="ALL">Todo</option><option value="ida">Ida</option><option value="vuelta">Vuelta</option></select>
             </label>
-            <label class="small">Jornada:
-              <select id="sumRound" style="width:auto"><option value="ALL">Todas</option></select>
-            </label>
             <label class="small">Pareja:
-              <select id="sumTeam" style="width:auto; min-width:160px"><option value="ALL">Todas</option></select>
+              <select id="sumTeam" style="width:auto; min-width:200px"><option value="ALL">Todas</option></select>
             </label>
             <label class="small"><input type="checkbox" id="sumShow"> Mostrar resultados</label>
           </div>
@@ -236,10 +235,6 @@
             </tr></thead><tbody></tbody></table>
           </div>
         </div>
-      </div>
-      <div class="card">
-        <div class="hd"><strong>🗓️ Partidos guardados</strong><span class="small">Se muestran desde Supabase o caché</span></div>
-        <div class="bd" id="matches"></div>
       </div>
     </section>
 
@@ -270,13 +265,12 @@
   await reloadAll();
   bindUI();
 
-  // --- Parejas: card toggle persistente
+  // Parejas: card toggle persistente
   (function(){
     const card = $('#pairsCard');
     const KEY = 'pairsCollapsed';
     const was = localStorage.getItem(KEY);
-    if(was === null || was === 'true') card.classList.add('is-collapsed');
-    else card.classList.remove('is-collapsed');
+    if(was === null || was === 'true') card.classList.add('is-collapsed'); else card.classList.remove('is-collapsed');
     card.querySelector('.hd').addEventListener('click', ()=>{
       card.classList.toggle('is-collapsed');
       localStorage.setItem(KEY, String(card.classList.contains('is-collapsed')));
@@ -333,11 +327,9 @@
     state.fixtures = { ida: buildRoundRobin(ids), vuelta: [] };
     state.fixtures.vuelta = state.fixtures.ida.map(r=> r.map(p=>[p[1],p[0]]));
 
-    populateFilterRounds();
-    populateSummaryRounds();
     populateTeamFilters();
 
-    renderTeams(); renderCards(); renderSummary(); renderMatches(); renderStandings();
+    renderTeams(); renderCards(); renderSummary(); renderStandings();
   }
 
   function bindUI(){
@@ -347,18 +339,16 @@
       const ids = state.teams.map(t=>t.id);
       state.fixtures.ida = buildRoundRobin(ids);
       state.fixtures.vuelta = state.fixtures.ida.map(r=> r.map(p=>[p[1],p[0]]));
-      renderCards(); populateFilterRounds(); populateSummaryRounds(); renderSummary();
+      renderCards(); renderSummary();
     });
     $('#filterLeg').addEventListener('change', renderCards);
-    $('#filterRound').addEventListener('change', renderCards);
     $('#filterTeam').addEventListener('change', renderCards);
     $('#sumLeg').addEventListener('change', renderSummary);
-    $('#sumRound').addEventListener('change', renderSummary);
     $('#sumTeam').addEventListener('change', renderSummary);
     const sumShow = $('#sumShow'); sumShow.checked = !!state.showSummaryResults; sumShow.addEventListener('change', ()=>{ state.showSummaryResults = sumShow.checked; saveLocal(); renderSummary(); });
     $('#resetLocal').addEventListener('click', ()=>{ if(confirm('¿Borrar caché local?')){ localStorage.removeItem(LS_KEY); location.reload(); } });
 
-    // Colapsar/expandir secciones togglable
+    // togglable cards (sin botón específico de colapsar)
     $$('.card.togglable .hd').forEach(h=> h.addEventListener('click', ()=> h.parentElement.classList.toggle('is-collapsed')));
 
     // Tabs mobile
@@ -389,9 +379,9 @@
   function renderTeams(){
     const list = $('#teamList');
     const html = state.teams.map((t,i)=>`
-      <div class="row" style="align-items:center; display:flex; justify-content:space-between; gap:8px; padding:6px 0">
+      <div class="row" style="align-items:center; display:flex; justify-content:space-between; gap:8px; padding:8px 0">
         <div class="col-10" style="flex:1 1 auto">
-          <strong>${escapeHtml(t.name)}</strong> <span class="small">· #${i+1}</span>
+          <strong style="font-size:1rem">${escapeHtml(t.name)}</strong> <span class="small">· #${i+1}</span>
         </div>
         <div class="col-2 actions" style="flex:0 0 auto">
           <button class="ghost" onclick="moveTeam(${i},-1)">↑</button>
@@ -426,18 +416,6 @@
     await reloadAll();
   };
 
-  function populateFilterRounds(){
-    const rounds = (state.fixtures.ida||[]).length;
-    const sel = $('#filterRound'); const cur = sel.value;
-    sel.innerHTML = '<option value="ALL">Todas</option>'+ Array.from({length:rounds},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('');
-    if(Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur;
-  }
-  function populateSummaryRounds(){
-    const rounds = (state.fixtures.ida||[]).length;
-    const sel = $('#sumRound'); const cur = sel.value;
-    sel.innerHTML = '<option value="ALL">Todas</option>'+ Array.from({length:rounds},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('');
-    if(Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur;
-  }
   function populateTeamFilters(){
     const ft = $('#filterTeam'), st = $('#sumTeam');
     const curFt = ft?.value || 'ALL';
@@ -449,13 +427,12 @@
     if(st){ st.innerHTML = opts; if(Array.from(st.options).some(o=>o.value===curSt)) st.value = curSt; }
   }
 
-  /* ======= MARCADOR / Inputs ======= */
+  /* ======= Inputs ======= */
   function makeSetCells(uniq, i, sets, side){
     const val = (sets[i] && sets[i][side==='A'?0:1]) || '';
     const id  = `${uniq}_s${i+1}${side.toLowerCase()}`;
     return `<input class="setBox" id="${id}" type="number" min="0" inputmode="numeric" value="${val}">`;
   }
-
   function setSummaryText(sets){
     if(!sets || !sets.length) return '';
     return sets.map(ab=> `${(ab[0]||0)}-${(ab[1]||0)}`).join(', ');
@@ -470,20 +447,18 @@
     const dateVal = toDateInputValue(existing.date);
     const isDone = !!existing.id || !!existing.uniq;
 
-    // Encabezado compacto + fecha lectura + chip sets + badge hecho
     const head = `
       <div class="mhd">
         <div class="names">🎾 <span class="pill">A</span> <strong>${A}</strong>
           <span style="opacity:.6">|</span> <span class="pill">B</span> <strong>${B}</strong>
         </div>
         <div class="meta">
-          ${dateVal ? `<span class="pill readonly">📅 ${dateVal}</span>` : ``}
+          ${dateVal ? `<span class="pill">📅 ${dateVal}</span>` : ``}
           ${sets.length ? `<span class="pill">🧾 ${setSummaryText(sets)}</span>` : ``}
           ${isDone ? `<span class="pill badge-done">✓ Hecho</span>` : ``}
         </div>
       </div>`;
 
-    // Cuerpo: inputs (fecha no editable aquí)
     const body = `
       <div class="m-bd">
         <div class="score-row">
@@ -503,46 +478,34 @@
         </div>
       </div>`;
 
-    // Juego colapsable
     return `<details class="match ${isDone?'done':''}">
       <summary>${head}</summary>
       ${body}
     </details>`;
   }
 
-  function jornadaBlock(title, games, leg, ri){
+  // Grupos planos por leg (sin jornadas): aplanamos los rounds
+  function legBlock(title, rounds, leg){
     const teamFilter = $('#filterTeam')?.value || 'ALL';
-    const filtered = (teamFilter==='ALL') ? games : games.filter(([x,y])=> x===teamFilter || y===teamFilter);
+    const pairs = rounds.flat(); // aplanado
+    const filtered = (teamFilter==='ALL') ? pairs : pairs.filter(([x,y])=> x===teamFilter || y===teamFilter);
     const gamesSorted = filtered.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
-    const inner = gamesSorted.map((g,idx)=> makeCard(g[0],g[1],leg,ri,idx)).join('');
-    // badge de conteo hechos
-    const total = gamesSorted.length;
-    const done = gamesSorted.filter((g,idx)=>{
-      const ia=indexOfTeam(g[0]), ib=indexOfTeam(g[1]);
-      const aId= (ia<=ib)? g[0]:g[1], bId=(ia<=ib)? g[1]:g[0];
-      const uniq = [aId,bId].slice().sort().join('__')+'_'+leg+'_'+ri+'_'+idx;
-      return !!state.matches.find(m=>m.uniq===uniq);
-    }).length;
 
-    return `<details class="round">
-      <summary>
-        <div class="round-title"><h3 class="small" style="margin:0">${title}</h3></div>
-        <div class="round-badges">
-          <span class="pill">Partidos: ${total}</span>
-          <span class="pill ${done===total && total>0 ? 'badge-done' : ''}">Hechos: ${done}/${total}</span>
-        </div>
-      </summary>
-      <div class="games-grid">${inner || '<div class="small">Sin partidos</div>'}</div>
-    </details>`;
-  }
+    const inner = gamesSorted.map((g,idx)=>{
+      // conservamos ri e idx reales para mantener uniq estable: los buscamos
+      // hallamos primera coincidencia en rounds
+      let ri=0, localIdx=0, found=false;
+      for(let r=0; r<rounds.length && !found; r++){
+        const j = rounds[r].findIndex(p=> (p[0]===g[0] && p[1]===g[1]) || (p[0]===g[1] && p[1]===g[0]));
+        if(j>-1){ ri=r; localIdx=j; found=true; }
+      }
+      return makeCard(g[0],g[1],leg,ri,localIdx);
+    }).join('');
 
-  function col(title, rounds, leg){
-    const roundFilter = $('#filterRound').value || 'ALL';
-    let mapped = rounds.map((games,ri)=>({ri,games}));
-    if(roundFilter!=='ALL'){ const rIndex = Number(roundFilter)-1; mapped = mapped.filter(x=>x.ri===rIndex); }
-    const blocks = mapped.map(x=> jornadaBlock('Jornada '+(x.ri+1), x.games, leg, x.ri)).join('');
     return `<div style="min-width:360px; max-width:100%; padding-right:10px">
-      <h2 style="margin:6px 0 10px">${title}</h2>${blocks || '<div class="small">Sin partidos</div>'}</div>`;
+      <h2 style="margin:4px 0 6px">${title}</h2>
+      <div class="games-grid">${inner || '<div class="small">Sin partidos</div>'}</div>
+    </div>`;
   }
 
   function renderCards(){
@@ -553,12 +516,12 @@
     const legFilter = $('#filterLeg').value || 'ALL';
     const showIda = (legFilter==='ALL' || legFilter==='ida'); const showVuelta = (legFilter==='ALL' || legFilter==='vuelta');
     const html = `<div style="display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap">
-      ${(showIda? col('IDA', ida, 'ida') : '')}
-      ${(showVuelta? col('VUELTA', vuelta, 'vuelta') : '')}
+      ${(showIda? legBlock('IDA', ida, 'ida') : '')}
+      ${(showVuelta? legBlock('VUELTA', vuelta, 'vuelta') : '')}
     </div>`;
     root.innerHTML = html;
 
-    // Auto-avance en inputs del marcador (nuevo orden: A1 -> A2 -> B1 -> B2 -> C1 -> C2)
+    // Auto-avance en inputs: A1 -> B1 -> A2 -> B2 -> A3 -> B3
     bindAutoAdvance(root);
   }
 
@@ -568,8 +531,8 @@
     cards.forEach(card=>{
       const cardInputs = [
         ...card.querySelectorAll('input[id$="_s1a"]'),
-        ...card.querySelectorAll('input[id$="_s2a"]'),
         ...card.querySelectorAll('input[id$="_s1b"]'),
+        ...card.querySelectorAll('input[id$="_s2a"]'),
         ...card.querySelectorAll('input[id$="_s2b"]'),
         ...card.querySelectorAll('input[id$="_s3a"]'),
         ...card.querySelectorAll('input[id$="_s3b"]'),
@@ -612,7 +575,7 @@
     if(rec){ Object.assign(rec, base); } else { rec = { id: uid(), ...base }; state.matches.push(rec); }
     await upsertMatch(rec);
 
-    renderMatches(); renderStandings(); renderSummary(); renderCards(); // refrescar para “✓ Hecho” y chips
+    renderStandings(); renderSummary(); renderCards(); // refrescar ✓ y chips
   };
 
   async function upsertMatch(rec){
@@ -623,34 +586,6 @@
       if(error){ console.warn(error); alert('No se pudo guardar en Supabase'); }
       else { rec.id = data.id; }
     } else saveLocal();
-  }
-
-  window.deleteMatch = async (id)=>{
-    const rec = state.matches.find(m=>m.id===id || m.uniq===id);
-    if(!rec) return;
-    if(!confirm(`¿Eliminar R${rec.round} ${teamName(rec.A)} vs ${teamName(rec.B)}?`)) return;
-    if(supabase){
-      await supabase.from('matches').delete().eq('uniq', rec.uniq).eq('league_id', LEAGUE_ID);
-    }
-    state.matches = state.matches.filter(m=>m.uniq!==rec.uniq);
-    saveLocal();
-    renderMatches(); renderStandings(); renderSummary(); renderCards();
-  };
-
-  function renderMatches(){
-    const root = $('#matches'); if(state.matches.length===0){ root.innerHTML = '<div class="small">Sin partidos</div>'; return; }
-    const fmt = d=>{ if(!d) return ''; const dt=new Date(d); return isNaN(dt)? d : dt.toLocaleDateString(); };
-    root.innerHTML = state.matches.slice().sort((a,b)=> (a.round||0)-(b.round||0) || (a.leg||'ida').localeCompare(b.leg||'ida')).map(m=>{
-      const aN=escapeHtml(teamName(m.A)), bN=escapeHtml(teamName(m.B));
-      const winA = m.ptsA>m.ptsB, winB = m.ptsB>m.ptsA;
-      const aL = winA? '🏅 '+aN : aN; const bL = winB? '🏅 '+bN : bN;
-      const setsTxt = (m.sets||[]).map(ab=> `${(ab[0]||0)}-${(ab[1]||0)}`).join(', ');
-      const when = m.date? ` • <span class="small">${fmt(m.date)}</span>` : '';
-      return `<div class="flex" style="justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border)">
-        <div><div><span class="pill">R${m.round}</span> <strong>${aL}</strong> vs <strong>${bL}</strong>${when}</div><div class="small">Sets: ${setsTxt}</div></div>
-        <div class="actions"><button class="danger" onclick="deleteMatch('${m.id||m.uniq}')">Eliminar</button></div>
-      </div>`;
-    }).join('');
   }
 
   function renderStandings(){
@@ -672,7 +607,6 @@
   function renderSummary(){
     const box = $('#summary');
     const legFilter = $('#sumLeg').value || 'ALL';
-    const roundFilter = $('#sumRound').value || 'ALL';
     const teamFilter = $('#sumTeam').value || 'ALL';
     const showResults = $('#sumShow').checked;
     const legs=[];
@@ -681,35 +615,40 @@
 
     const makeBlock = (title, rounds, leg)=>{
       if(!rounds || !rounds.length) return '';
-      const cards = rounds.map((games,i)=>{
-        if(roundFilter!=='ALL' && i!==Number(roundFilter)-1) return '';
-        const filtered = (teamFilter==='ALL') ? games : games.filter(([x,y])=> x===teamFilter || y===teamFilter);
-        const gamesSorted = filtered.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
-        const items = gamesSorted.map((pair,idx)=>{
-          const [a,b] = (indexOfTeam(pair[0])<=indexOfTeam(pair[1]))? [pair[0],pair[1]] : [pair[1],pair[0]];
-          const uniq = [a,b].slice().sort().join('__')+'_'+leg+'_'+i+'_'+idx;
-          const rec = state.matches.find(m=>m.uniq===uniq);
-          const aN = escapeHtml(teamName(a)); const bN = escapeHtml(teamName(b));
-          let labA = aN, labB = bN, chip='';
-          if(rec && showResults){
-            const winA = rec.ptsA>rec.ptsB, winB = rec.ptsB>rec.ptsA;
-            if(winA) labA = '<span class="win">🏅 <strong>'+labA+'</strong></span>';
-            if(winB) labB = '<span class="win">🏅 <strong>'+labB+'</strong></span>';
-            const setsTxt = (rec.sets||[]).map(ab=> `${(ab[0]||0)}-${(ab[1]||0)}`).join(', ');
-            if(setsTxt) chip = '<div class="small">🧾 <span class="pill">'+setsTxt+'</span></div>';
-          }
-          const dateVal = toDateInputValue((rec||{}).date);
-          return `<div class="pill-match ${rec ? 'pm--done' : 'pm--pending'}" id="pill_${uniq}">
-              <div class="small" style="display:flex; justify-content:flex-end">📅 <input type="date" id="sum_${uniq}" value="${dateVal||''}" style="width:auto"></div>
-              <div class="pm-title">🎾 <span class="pill">A</span> <strong>${labA}</strong> <span style="opacity:.6">|</span>
-                <span class="pill">B</span> <strong>${labB}</strong></div>
-              ${chip}
-              <div class="actions" style="justify-content:center; margin-top:6px"><button class="ghost" onclick="openMatch('${uniq}')">Ir al partido</button></div>
-            </div>`;
-        }).join('');
-        return `<div class="sum-card"><h4><span>${title}</span> · Jornada ${i+1}</h4>${items || '<span class="small">(sin partidos)</span>'}</div>`;
+      const pairs = rounds.flat();
+      const filtered = (teamFilter==='ALL') ? pairs : pairs.filter(([x,y])=> x===teamFilter || y===teamFilter);
+      const gamesSorted = filtered.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
+      const items = gamesSorted.map(pair=>{
+        // recuperar ri/idx reales para uniq
+        let ri=0, idx=0, found=false;
+        for(let r=0; r<rounds.length && !found; r++){
+          const j = rounds[r].findIndex(p=> (p[0]===pair[0] && p[1]===pair[1]) || (p[0]===pair[1] && p[1]===pair[0]));
+          if(j>-1){ ri=r; idx=j; found=true; }
+        }
+        const [a,b] = (indexOfTeam(pair[0])<=indexOfTeam(pair[1]))? [pair[0],pair[1]] : [pair[1],pair[0]];
+        const uniq = [a,b].slice().sort().join('__')+'_'+leg+'_'+ri+'_'+idx;
+        const rec = state.matches.find(m=>m.uniq===uniq);
+        const aN = escapeHtml(teamName(a)); const bN = escapeHtml(teamName(b));
+        let labA = aN, labB = bN, chip='';
+        if(rec && showResults){
+          const winA = rec.ptsA>rec.ptsB, winB = rec.ptsB>rec.ptsA;
+          if(winA) labA = '<span class="win">🏅 <strong>'+labA+'</strong></span>';
+          if(winB) labB = '<span class="win">🏅 <strong>'+labB+'</strong></span>';
+          const setsTxt = (rec.sets||[]).map(ab=> `${(ab[0]||0)}-${(ab[1]||0)}`).join(', ');
+          if(setsTxt) chip = '<div class="small">🧾 <span class="pill">'+setsTxt+'</span></div>';
+        }
+        const dateVal = toDateInputValue((rec||{}).date);
+        return `<div class="pill-match ${rec ? 'pm--done' : 'pm--pending'}" id="pill_${uniq}">
+            <div class="small" style="display:flex; justify-content:flex-end; gap:6px; align-items:center">
+              <span>📅</span> <input type="date" id="sum_${uniq}" value="${dateVal||''}" style="width:auto">
+            </div>
+            <div class="pm-title">🎾 <span class="pill">A</span> <strong>${labA}</strong> <span style="opacity:.6">|</span>
+              <span class="pill">B</span> <strong>${labB}</strong></div>
+            ${chip}
+            <div class="actions" style="justify-content:center; margin-top:6px"><button class="ghost" onclick="openMatch('${uniq}')">Ir al partido</button></div>
+          </div>`;
       }).join('');
-      return cards;
+      return `<div class="sum-card"><h4 style="margin:0 0 8px 0">${title}</h4>${items || '<span class="small">(sin partidos)</span>'}</div>`;
     };
 
     box.innerHTML = `<div class="sum-grid">${legs.map(([t,r,k])=>makeBlock(t,r,k)).join('')}</div>`;
@@ -717,17 +656,15 @@
     $$('#summary input[type="date"]').forEach(inp=>{
       inp.addEventListener('change', async function(){
         const uniq = this.id.replace('sum_','');
-        const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderCards(); renderMatches(); }
+        const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderCards(); }
       });
     });
   }
 
   window.openMatch = function(uniq){
     try{
-      const el = document.querySelector(`details.match summary .mhd`).parentElement;
-      // buscar el details.match exacto por uniq:
       const d = document.querySelector(`details.match summary + .m-bd input[id^="${uniq}_s1a"]`)?.closest('details.match');
-      const target = d || el;
+      const target = d;
       if(!target){ alert('No encontré la card del partido.'); return; }
       target.open = true;
       target.scrollIntoView({behavior:'smooth', block:'center'}); target.classList.add('flash');
