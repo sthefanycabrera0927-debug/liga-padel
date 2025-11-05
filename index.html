@@ -76,11 +76,6 @@
     @media (max-width: 820px){ .mobile-tabs{display:flex} .mobile-section{display:none} .mobile-section.active{display:block} }
     .flash{ box-shadow:0 0 0 3px var(--accent) inset }
 
-    /* ======= Colapsables ======= */
-    .card.togglable .hd{ cursor:pointer }
-    .card.is-collapsed .bd{ display:none }
-    .hd .toggle-tip{ font-size:.85rem; color:var(--muted); margin-left:8px }
-
     /* ======= Jornadas ======= */
     details.round{ border:1px dashed var(--border); border-radius:12px; padding:6px 10px; background:#fff }
     details.round>summary{ cursor:pointer; list-style:none; }
@@ -134,12 +129,12 @@
       <button type="button" data-target="#sec-tabla">📊 Tabla</button>
     </nav>
 
-    <!-- PAREJAS (colapsable con persistencia) -->
+    <!-- PAREJAS -->
     <section id="sec-parejas" class="grid mobile-section">
-      <div class="card togglable is-collapsed" id="pairsCard">
+      <div class="card" id="pairsCard">
         <div class="hd">
           <strong>➕ Parejas / Jugadoras</strong>
-          <span class="small toggle-tip">(clic para mostrar/ocultar)</span>
+          <span class="small" style="opacity:.75">(se usa para armar las jornadas)</span>
         </div>
         <div class="bd">
           <div class="actions">
@@ -152,9 +147,9 @@
       </div>
     </section>
 
-    <!-- CUADROS (colapsable) -->
+    <!-- CUADROS (Ida/Vuelta) por JORNADAS: aquí se guardan los resultados -->
     <section id="sec-cuadros" class="grid mobile-section">
-      <div class="card togglable" id="fixtureCard">
+      <div class="card" id="fixtureCard">
         <div class="hd">
           <strong>📆 Cuadros (Ida/Vuelta)</strong>
           <div class="actions">
@@ -178,13 +173,12 @@
       </div>
     </section>
 
-    <!-- RESUMEN (colapsable) -->
+    <!-- RESUMEN (por jornadas, opcional mostrar resultados) -->
     <section id="sec-resumen" class="grid mobile-section">
-      <div class="card togglable" id="summaryCard">
+      <div class="card" id="summaryCard">
         <div class="hd">
           <strong>📋 Resumen de Partidos (Ida/Vuelta)</strong>
           <div class="actions">
-            <button id="toggleSummary" class="ghost">Colapsar</button>
             <label class="small">Vista:
               <select id="sumLeg" style="width:auto"><option value="ALL">Todo</option><option value="ida">Ida</option><option value="vuelta">Vuelta</option></select>
             </label>
@@ -201,7 +195,7 @@
       </div>
     </section>
 
-    <!-- TABLA (NO colapsable) -->
+    <!-- TABLA (siempre visible) -->
     <section id="sec-tabla" class="grid mobile-section">
       <div class="card">
         <div class="hd"><strong>📊 Tabla de posiciones</strong>
@@ -214,10 +208,6 @@
             </tr></thead><tbody></tbody></table>
           </div>
         </div>
-      </div>
-      <div class="card">
-        <div class="hd"><strong>🗓️ Partidos guardados</strong><span class="small">Se muestran desde Supabase o caché</span></div>
-        <div class="bd" id="matches"></div>
       </div>
     </section>
 
@@ -247,33 +237,6 @@
   initTabs();
   await reloadAll();
   bindUI();
-  bindCollapsers(); // <-- colapsables globales (excepto la tabla)
-
-  // --- Parejas: persistencia de colapso
-  (function(){
-    const card = $('#pairsCard');
-    const KEY = 'pairsCollapsed';
-    const was = localStorage.getItem(KEY);
-    if(was === null || was === 'true') card.classList.add('is-collapsed');
-    else card.classList.remove('is-collapsed');
-    card.querySelector('.hd').addEventListener('click', (ev)=>{
-      // si se hace click en inputs/selects/botones dentro del header, no colapsar
-      if(ev.target.closest('button,select,input,label')) return;
-      card.classList.toggle('is-collapsed');
-      localStorage.setItem(KEY, String(card.classList.contains('is-collapsed')));
-    });
-  })();
-
-  function bindCollapsers(){
-    // Todas las cards marcadas como .togglable (excepto #pairsCard que ya tiene persistencia)
-    $$('.card.togglable:not(#pairsCard) .hd').forEach(hd=>{
-      hd.addEventListener('click', (ev)=>{
-        if(ev.target.closest('button,select,input,label')) return;
-        const card = hd.closest('.card');
-        card.classList.toggle('is-collapsed');
-      });
-    });
-  }
 
   function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch{} }
   function loadLocal(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch{ return null; } }
@@ -329,7 +292,7 @@
     populateSummaryRounds();
     populateTeamFilters();
 
-    renderTeams(); renderCards(); renderSummary(); renderMatches(); renderStandings();
+    renderTeams(); renderCards(); renderSummary(); renderStandings();
   }
 
   function bindUI(){
@@ -349,13 +312,6 @@
     $('#sumTeam').addEventListener('change', renderSummary);
     const sumShow = $('#sumShow'); sumShow.checked = !!state.showSummaryResults; sumShow.addEventListener('change', ()=>{ state.showSummaryResults = sumShow.checked; saveLocal(); renderSummary(); });
     $('#resetLocal').addEventListener('click', ()=>{ if(confirm('¿Borrar caché local?')){ localStorage.removeItem(LS_KEY); location.reload(); } });
-
-    const tabs = $$('#mobileTabs button'); const sections = ['#sec-parejas','#sec-cuadros','#sec-resumen','#sec-tabla'].map(s=>$(s));
-    function isMobile(){ return window.matchMedia('(max-width:820px)').matches; }
-    function activate(sel){ tabs.forEach(b=>b.classList.toggle('active', b.dataset.target===sel)); sections.forEach(sec=> sec && (sec.classList.toggle('active','#'+sec.id===sel), sec.classList.add('mobile-section'))); }
-    tabs.forEach(btn=> btn.addEventListener('click', ()=> activate(btn.dataset.target)));
-    window.addEventListener('resize', ()=>{ if(!isMobile()){ sections.forEach(sec=>sec && sec.classList.add('active')); } });
-    if(isMobile()) activate('#sec-cuadros'); else sections.forEach(sec=>sec && sec.classList.add('active'));
   }
 
   async function onAddTeam(){
@@ -435,7 +391,7 @@
     if(st) st.innerHTML = opts;
   }
 
-  /* ======= MARCADOR COMPACTO ======= */
+  /* ======= MARCADOR: inputs por partido (se guarda aquí) ======= */
   function makeSetCells(uniq, i, sets, side){
     const val = (sets[i] && sets[i][side==='A'?0:1]) || '';
     const id  = `${uniq}_s${i+1}${side.toLowerCase()}`;
@@ -479,7 +435,6 @@
   function jornadaBlock(title, games, leg, ri){
     const teamFilter = $('#filterTeam')?.value || 'ALL';
     const filtered = (teamFilter==='ALL') ? games : games.filter(([x,y])=> x===teamFilter || y===teamFilter);
-
     const gamesSorted = filtered.slice().sort((g1,g2)=> comparePairs(g1[0],g1[1],g2[0],g2[1]));
     const inner = gamesSorted.map((g,idx)=> makeCard(g[0],g[1],leg,ri,idx)).join('');
     return `<details class="round"><summary><h3 class="small" style="display:inline">${title}</h3></summary>${inner || '<div class="small">Sin partidos</div>'}</details>`;
@@ -509,9 +464,10 @@
 
     bindAutoAdvance(root);
 
+    // Fecha desde la card sincroniza a Supabase y refresca resumen/tabla (no hay lista final)
     $$('#cards input[type="date"]').forEach(inp=> inp.addEventListener('change', async function(){
       const uniq = this.id.replace('_date','');
-      const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderMatches(); renderSummary(); }
+      const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderSummary(); renderStandings(); }
     }));
   }
 
@@ -552,6 +508,7 @@
     });
   }
 
+  // Guardar resultado DESDE LA CARD (por jornada/partido)
   window.saveCard = async (a,b,leg,ri,idx)=>{
     const pair = [a,b].slice().sort().join('__'); const uniq = `${pair}_${leg}_${ri}_${idx}`;
     const get = id => document.getElementById(id);
@@ -572,7 +529,7 @@
     const base = { uniq, A:a, B:b, leg, round:ri+1, sets: vals, ptsA, ptsB, date };
     if(rec){ Object.assign(rec, base); } else { rec = { id: uid(), ...base }; state.matches.push(rec); }
     await upsertMatch(rec);
-    renderMatches(); renderStandings(); renderSummary();
+    renderStandings(); renderSummary();
     try{
       const det = document.getElementById(uniq+'_date').closest('details.round'); if(det) det.open=false;
       const sum=$('#summary'); sum&&sum.scrollIntoView({behavior:'smooth'});
@@ -589,34 +546,7 @@
     } else saveLocal();
   }
 
-  window.deleteMatch = async (id)=>{
-    const rec = state.matches.find(m=>m.id===id || m.uniq===id);
-    if(!rec) return;
-    if(!confirm(`¿Eliminar R${rec.round} ${teamName(rec.A)} vs ${teamName(rec.B)}?`)) return;
-    if(supabase){
-      await supabase.from('matches').delete().eq('uniq', rec.uniq).eq('league_id', LEAGUE_ID);
-    }
-    state.matches = state.matches.filter(m=>m.uniq!==rec.uniq);
-    saveLocal();
-    renderMatches(); renderStandings(); renderSummary(); renderCards();
-  };
-
-  function renderMatches(){
-    const root = $('#matches'); if(state.matches.length===0){ root.innerHTML = '<div class="small">Sin partidos</div>'; return; }
-    const fmt = d=>{ if(!d) return ''; const dt=new Date(d); return isNaN(dt)? d : dt.toLocaleDateString(); };
-    root.innerHTML = state.matches.slice().sort((a,b)=> (a.round||0)-(b.round||0) || (a.leg||'ida').localeCompare(b.leg||'ida')).map(m=>{
-      const aN=escapeHtml(teamName(m.A)), bN=escapeHtml(teamName(m.B));
-      const winA = m.ptsA>m.ptsB, winB = m.ptsB>m.ptsA;
-      const aL = winA? '🏅 '+aN : aN; const bL = winB? '🏅 '+bN : bN;
-      const setsTxt = (m.sets||[]).map(ab=> `${(ab[0]||0)}-${(ab[1]||0)}`).join(', ');
-      const when = m.date? ` • <span class="small">${fmt(m.date)}</span>` : '';
-      return `<div class="flex" style="justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border)">
-        <div><div><span class="pill">R${m.round}</span> <strong>${aL}</strong> vs <strong>${bL}</strong>${when}</div><div class="small">Sets: ${setsTxt}</div></div>
-        <div class="actions"><button class="danger" onclick="deleteMatch('${m.id||m.uniq}')">Eliminar</button></div>
-      </div>`;
-    }).join('');
-  }
-
+  // ======= TABLA =======
   function renderStandings(){
     const stats = {}; state.teams.forEach(t=> stats[t.id]={ id:t.id, name:t.name, PJ:0, PG:0, PP:0, GW:0, GL:0, PTS:0 });
     state.matches.forEach(m=>{
@@ -633,6 +563,7 @@
       || `<tr><td colspan="9" class="small">Sin datos</td></tr>`;
   }
 
+  // ======= RESUMEN =======
   function renderSummary(){
     const box = $('#summary');
     const legFilter = $('#sumLeg').value || 'ALL';
@@ -681,7 +612,7 @@
     $$('#summary input[type="date"]').forEach(inp=>{
       inp.addEventListener('change', async function(){
         const uniq = this.id.replace('sum_','');
-        const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderCards(); renderMatches(); }
+        const rec = state.matches.find(x=>x.uniq===uniq); if(rec){ rec.date = this.value || null; await upsertMatch(rec); renderCards(); }
       });
     });
   }
