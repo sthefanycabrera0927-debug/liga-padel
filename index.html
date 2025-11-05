@@ -93,7 +93,7 @@
     @media (max-width: 820px){ .mobile-tabs{display:flex} .mobile-section{display:none} .mobile-section.active{display:block} }
     .flash{ box-shadow:0 0 0 3px var(--accent) inset }
 
-    /* ======= Tarjetitas de cruce ======= */
+    /* ===== Tarjetitas de cruce (base) ===== */
     .games-grid{
       display:grid; gap:12px; margin-top:10px;
       grid-template-columns: repeat(2, minmax(320px, 1fr));
@@ -112,9 +112,7 @@
     details.match > summary::-webkit-details-marker{ display:none }
     .mhd{ display:flex; align-items:center; gap:12px; flex:1; min-width:0 }
     .mhd .badgeAB{ display:inline-flex; gap:6px }
-    .mhd .names{
-      display:flex; flex-direction:column; min-width:0;
-    }
+    .mhd .names{ display:flex; flex-direction:column; min-width:0; }
     .mhd .names .line{
       display:flex; gap:8px; align-items:center; min-width:0;
       font-size:1rem; color:#0b1227; font-weight:700;
@@ -128,7 +126,7 @@
     .badge-done{ background:#eaffef; border:1px solid #bfeacb; color:#075a2a }
     .match.done{ border-left:4px solid var(--ok) }
 
-    /* Sets dentro de la tarjeta (solo abiertos) */
+    /* Sets dentro de la tarjeta */
     .score-row{
       display:grid; grid-template-columns: 1fr repeat(3,58px); gap:8px; align-items:center;
       padding:6px 0;
@@ -143,7 +141,7 @@
       box-shadow:inset 0 1px 0 rgba(0,0,0,.03);
     }
 
-    /* Sub-colapsables de Cruces por IDA/VUELTA */
+    /* Sub-colapsables por leg */
     details.leg{ border:1px dashed var(--border); border-radius:12px; padding:6px 8px; margin-bottom:10px; background:#fff }
     details.leg>summary{ list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px; font-weight:700 }
     details.leg>summary::-webkit-details-marker{ display:none }
@@ -153,6 +151,53 @@
       .setBox{ width:48px; height:40px; font-size:18px }
       .mhd .names .line strong{ max-width:30ch }
     }
+
+    /* ===== Mejoras visuales (como la foto) ===== */
+
+    /* Tabs tipo segmentado */
+    .mobile-tabs{
+      position: sticky; top: 0; padding: 8px; z-index: 5;
+      display: flex; gap: 8px; background: linear-gradient(#f6f8fb,#f6f8fb);
+    }
+    .mobile-tabs button{
+      flex: 1; display:flex; align-items:center; justify-content:center; gap:6px;
+      border-radius: 999px; border:1px solid var(--border); background:#fff;
+      font-weight:700; font-size:.95rem; padding: 10px 12px;
+      box-shadow: 0 1px 0 rgba(16,24,40,.03);
+    }
+    .mobile-tabs button.active{
+      background: var(--ok); color: var(--accent-ink); border-color: transparent;
+    }
+
+    /* Tarjetas con look chip y acento al abrir */
+    details.match{ border:1px solid #e8eef6; background:#ffffff; border-radius:16px; }
+    details.match > summary{ background:#f9fafb }
+    details.match:hover{ border-color:#d8e6f8 }
+    details.match[open]{
+      box-shadow:0 10px 26px rgba(16,24,40,.10);
+      border-color:#cfe2fb; position:relative;
+    }
+    details.match[open]::before{
+      content:""; position:absolute; inset:0 0 0 auto;
+      left:0; width:4px; border-radius:16px 0 0 16px; background: var(--ok);
+    }
+    .pill{
+      background:#f1f5f9; border-color:#e6eaf1; padding:.30rem .6rem; border-radius:999px;
+    }
+    .mhd .names .line{ font-size:1.06rem; font-weight:800 }
+    .mhd .vs{ opacity:.35; font-weight:800 }
+
+    /* Una sola columna hasta 960px */
+    .games-grid{ grid-template-columns: repeat(2, minmax(320px, 1fr)); }
+    @media (max-width: 960px){
+      .games-grid{ grid-template-columns: 1fr; }
+    }
+    .setBox{ width:60px; height:48px; font-size:20px }
+    @media (max-width: 560px){
+      .setBox{ width:52px; height:44px; font-size:18px }
+    }
+    .badge-done{ background:#eaffef; border:1px solid #bfeacb; color:#075a2a }
+    .match.done{ border-left:4px solid var(--ok) }
   </style>
 </head>
 <body>
@@ -172,7 +217,7 @@
       <button type="button" data-target="#sec-tabla">📊 Tabla</button>
     </nav>
 
-    <!-- PAREJAS (colapsable funcionando) -->
+    <!-- PAREJAS -->
     <section id="sec-parejas" class="grid mobile-section active">
       <div class="card togglable" id="pairsCard">
         <div class="hd" id="pairsHeader">
@@ -223,9 +268,6 @@
       </div>
     </section>
 
-    <!-- RESUMEN (comentado por ahora) -->
-    <!-- ... -->
-
     <!-- TABLA -->
     <section id="sec-tabla" class="grid mobile-section">
       <div class="card">
@@ -274,19 +316,26 @@
   await reloadAll();
   bindUI();
 
-  /* ======= Parejas: toggle real + persistencia ======= */
-  (function(){
-    const card = $('#pairsCard');
-    const header = $('#pairsHeader');
-    const KEY = 'pairsCollapsed';
-    const was = localStorage.getItem(KEY);
-    if(was === 'true') card.classList.add('is-collapsed'); else card.classList.remove('is-collapsed');
-    header.addEventListener('click', (e)=>{
-      if(e.target.closest('button, input, select, a')) return; // no colapsar si clic en controles
-      card.classList.toggle('is-collapsed');
-      localStorage.setItem(KEY, String(card.classList.contains('is-collapsed')));
-    });
+  // ===== PAREJAS: estado inicial + toggle con persistencia (ÚNICO)
+  (function initPairsCollapsed(){
+    const card = document.getElementById('pairsCard');
+    const was = localStorage.getItem('pairsCollapsed');
+    if(card){
+      if(was === 'true') card.classList.add('is-collapsed');
+      else card.classList.remove('is-collapsed');
+    }
   })();
+
+  $$('.card.togglable .hd').forEach(h=>{
+    h.addEventListener('click', (e)=>{
+      if(e.target.closest('button, input, select, a')) return; // no colapsar si clic en controles
+      const card = h.parentElement;
+      card.classList.toggle('is-collapsed');
+      if(card.id === 'pairsCard'){
+        localStorage.setItem('pairsCollapsed', String(card.classList.contains('is-collapsed')));
+      }
+    });
+  });
 
   function saveLocal(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch{} }
   function loadLocal(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch{ return null; } }
@@ -353,14 +402,6 @@
     });
     $('#filterLeg').addEventListener('change', renderCards);
     $('#filterTeam').addEventListener('change', renderCards);
-
-    // Toggle genérico para todas las cards (evita colapsar si clic en controles)
-    $$('.card.togglable .hd').forEach(h=>{
-      h.addEventListener('click', (e)=>{
-        if(e.target.closest('button, input, select, a')) return;
-        h.parentElement.classList.toggle('is-collapsed');
-      });
-    });
 
     // Tabs mobile
     const tabs = $$('#mobileTabs button');
@@ -440,7 +481,7 @@
     if(ft){ ft.innerHTML = opts; if(Array.from(ft.options).some(o=>o.value===curFt)) ft.value = curFt; }
   }
 
-  /* ======= Helpers marcador ======= */
+  /* ===== Helpers marcador ===== */
   function makeSetCells(uniq, i, sets, side){
     const val = (sets[i] && sets[i][side==='A'?0:1]) || '';
     const id  = `${uniq}_s${i+1}${side.toLowerCase()}`;
@@ -451,7 +492,7 @@
     return sets.map(ab=> `${(ab[0]||0)}-${(ab[1]||0)}`).join(', ');
   }
 
-  /* ======= Tarjetita de partido ======= */
+  /* ===== Tarjetita de partido ===== */
   function makeCard(a,b,leg,ri,idx){
     const ia=indexOfTeam(a), ib=indexOfTeam(b); const aId= (ia<=ib)? a:b, bId=(ia<=ib)? b:a;
     const A = escapeHtml(teamName(aId)); const B = escapeHtml(teamName(bId));
@@ -511,7 +552,7 @@
     </details>`;
   }
 
-  /* ======= Listado por leg (aplanado) ======= */
+  /* ===== Listado por leg ===== */
   function legBlock(rounds, leg){
     const teamFilter = $('#filterTeam')?.value || 'ALL';
     const pairs = rounds.flat();
@@ -545,19 +586,18 @@
       $('#badgeVuelta').textContent = '';
     } else { $('#cardsVuelta').innerHTML=''; }
 
-    makeAccordion('#cardsIda, #cardsVuelta');      // ➊ acordeón
-    bindAutoAdvancePerCard('#cardsIda, #cardsVuelta'); // ➋ auto-avance por tarjeta
+    makeAccordion('#cardsIda, #cardsVuelta');          // acordeón (solo una abierta)
+    bindAutoAdvancePerCard('#cardsIda, #cardsVuelta');  // auto-avance por tarjeta
     updateLegBadges();
     bindDateChanges();
   }
 
-  /* ======= Acordeón: solo una tarjeta abierta ======= */
+  /* ===== Acordeón: solo una tarjeta abierta ===== */
   function makeAccordion(scopeSelector){
     $$(scopeSelector).forEach(scope=>{
       scope.querySelectorAll('details.match > summary').forEach(sum=>{
-        sum.addEventListener('click', (e)=>{
+        sum.addEventListener('click', ()=>{
           const details = sum.parentElement;
-          // Esperar al toggle nativo y luego cerrar las demás
           setTimeout(()=>{
             if(details.open){
               scope.querySelectorAll('details.match').forEach(d=>{
@@ -570,7 +610,7 @@
     });
   }
 
-  /* ======= Auto-avance por tarjeta (no salta a la vecina) ======= */
+  /* ===== Auto-avance por tarjeta ===== */
   function bindAutoAdvancePerCard(scopeSelector){
     $$(scopeSelector).forEach(scope=>{
       scope.querySelectorAll('details.match').forEach(card=>{
@@ -633,7 +673,7 @@
     $('#badgeVuelta').textContent = `• Hechos ${b.done}/${b.total}`;
   }
 
-  /* ======= Guardar/Actualizar (upsert) ======= */
+  /* ===== Guardar/Actualizar (upsert) ===== */
   window.saveCard = async (a,b,leg,ri,idx)=>{
     const pair = [a,b].slice().sort().join('__'); const uniq = `${pair}_${leg}_${ri}_${idx}`;
     const get = id => document.getElementById(id);
@@ -670,7 +710,7 @@
     } else saveLocal();
   }
 
-  /* ======= Eliminar resultado ======= */
+  /* ===== Eliminar resultado ===== */
   window.deleteMatch = async (uniq)=>{
     const rec = state.matches.find(m=>m.uniq===uniq);
     if(!rec){ return; }
@@ -685,7 +725,7 @@
     renderStandings(); renderCards();
   };
 
-  /* ======= Tabla ======= */
+  /* ===== Tabla ===== */
   function renderStandings(){
     const stats = {}; state.teams.forEach(t=> stats[t.id]={ id:t.id, name:t.name, PJ:0, PG:0, PP:0, GW:0, GL:0, PTS:0 });
     state.matches.forEach(m=>{
