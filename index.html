@@ -27,7 +27,6 @@
       display:flex; align-items:center; justify-content:space-between; padding:10px 14px;
       border-bottom:1px solid var(--border); font-size:.94rem; user-select:none;
     }
-    .card .hd button, .card .hd input, .card .hd select, .card .hd a{ pointer-events:auto }
     .card .bd{ padding:12px 14px }
     .card.is-collapsed .bd{ display:none }
     .card.togglable .hd{ cursor:pointer }
@@ -52,7 +51,6 @@
       width:36px; height:36px; border:1px solid var(--border); border-radius:10px; background:#fff;
       display:inline-flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer;
     }
-    .icon-btn:hover{ box-shadow:0 0 0 2px rgba(0,0,0,.03) inset }
 
     table{ width:100%; border-collapse:collapse; min-width:560px; font-size:.92rem }
     th,td{ padding:8px 8px; border-bottom:1px solid var(--border); text-align:left }
@@ -60,7 +58,7 @@
     .small{ font-size:.8rem; color:var(--muted) }
 
     /* ===== Tabs móviles: SOLO en mobile ===== */
-    .mobile-tabs{ display:none } /* default: oculto (desktop) */
+    .mobile-tabs{ display:none } /* oculto en desktop */
     .mobile-section{ display:block }
     @media (max-width: 820px){
       .mobile-tabs{
@@ -75,8 +73,6 @@
       .mobile-tabs button.active{ background:var(--ok); color:var(--accent-ink); border-color:transparent }
       .mobile-section{ display:none } .mobile-section.active{ display:block }
     }
-
-    .flash{ box-shadow:0 0 0 3px var(--accent) inset }
 
     /* ===== Tarjetas de cruces ===== */
     .games-grid{
@@ -100,11 +96,43 @@
     .match.done{ border-left:4px solid var(--ok) }
 
     .mhd{ display:flex; align-items:center; gap:12px; flex:1; min-width:0 }
-    .mhd .badgeAB{ display:inline-flex; gap:6px }
-    .mhd .names{ display:flex; flex-direction:column; min-width:0 }
-    .mhd .names .line{ display:flex; gap:8px; align-items:center; min-width:0; font-size:1rem; color:#0b1227; font-weight:800 }
-    .mhd .names .line strong{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:44ch }
-    .mhd .vs{ margin:0 4px; opacity:.35; font-weight:800 }
+    .mhd .badgeAB{ display:none } /* menos ruido en general */
+
+    /* === NUEVO BLOQUE DE NOMBRES RESPONSIVO === */
+    .mhd .names{
+      display:grid;
+      grid-template-columns: 1fr auto 1fr; /* desktop */
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .mhd .names .a strong,
+    .mhd .names .b strong{
+      display:block;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      font-size:1.06rem; font-weight:800; color:#0b1227;
+    }
+    .mhd .names .vs{ font-weight:800; opacity:.35 }
+
+    /* MÓVIL: A (línea 1), vs, B (línea 2), sin truncar */
+    @media (max-width: 600px){
+      details.match > summary{ flex-direction:column; align-items:flex-start; gap:8px; padding:10px 12px }
+      .mhd .names{
+        grid-template-columns: 1fr; /* una sola columna */
+        gap:2px;
+        width:100%;
+      }
+      .mhd .names .a{ order:1 }
+      .mhd .names .vs{ order:2; opacity:.5; font-size:.85rem }
+      .mhd .names .b{ order:3 }
+      .mhd .names .a strong,
+      .mhd .names .b strong{
+        white-space:normal; overflow:visible; text-overflow:clip; /* permite wrap */
+      }
+      .mhd .meta{ margin-left:0; width:100%; display:flex; gap:6px; flex-wrap:wrap }
+      .pill{ font-size:.74rem; padding:.22rem .46rem }
+    }
+
     .mhd .meta{ margin-left:auto; display:flex; gap:6px; align-items:center; flex-wrap:wrap }
     .m-bd{ padding:12px 14px; background:linear-gradient(180deg,#fff,#fbfdff) }
 
@@ -118,27 +146,7 @@
       width:58px; height:46px; border:1px solid var(--border); border-radius:10px;
       font-size:20px; text-align:center; font-weight:700; letter-spacing:.2px; box-shadow:inset 0 1px 0 rgba(0,0,0,.03);
     }
-
-    /* ===== MODO MÓVIL: header de tarjeta en dos líneas y chips compactas ===== */
-    @media (max-width: 600px){
-      details.match > summary{
-        padding:10px 12px; align-items:flex-start; gap:10px;
-        /* apilamos nombre + chips */
-        flex-direction:column;
-      }
-      .mhd{ width:100%; gap:8px }
-      .mhd .badgeAB{ display:none } /* menos ruido */
-      .mhd .names .line{ font-size:1rem }
-      .mhd .names .line strong{ max-width:22ch } /* cortes más agresivos */
-      .mhd .meta{
-        margin-left:0;
-        width:100%;
-        gap:6px;
-      }
-      .pill{ font-size:.74rem; padding:.22rem .46rem }
-      .setBox{ width:52px; height:42px; font-size:18px }
-      .score-row{ grid-template-columns:1fr repeat(3,48px); gap:6px }
-    }
+    @media (max-width:560px){ .score-row{ grid-template-columns:1fr repeat(3,48px); gap:6px } .setBox{ width:52px; height:42px; font-size:18px } }
 
     /* Sub-colapsables por leg */
     details.leg{ border:1px dashed var(--border); border-radius:12px; padding:6px 8px; margin-bottom:10px; background:#fff }
@@ -329,7 +337,7 @@
     $('#filterLeg').addEventListener('change', renderCards);
     $('#filterTeam').addEventListener('change', renderCards);
 
-    // Toggle genérico de cards
+    // Toggle genérico
     $$('.card.togglable .hd').forEach(h=>{
       h.addEventListener('click', (e)=>{
         if(e.target.closest('button, input, select, a')) return;
@@ -432,9 +440,10 @@
 
     const head = `
       <div class="mhd">
-        <div class="badgeAB"><span class="pill">A</span><span class="pill">B</span></div>
         <div class="names">
-          <div class="line"><strong>${A}</strong> <span class="vs">vs</span> <strong>${B}</strong></div>
+          <div class="a"><strong>${A}</strong></div>
+          <div class="vs">vs</div>
+          <div class="b"><strong>${B}</strong></div>
         </div>
         <div class="meta">
           <span class="pill">${dateVal ? `📅 ${dateVal}` : `📅 sin fecha`}</span>
