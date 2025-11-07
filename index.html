@@ -152,6 +152,24 @@
     details.leg{ border:1px dashed var(--border); border-radius:12px; padding:6px 8px; margin-bottom:10px; background:#fff }
     details.leg>summary{ list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px; font-weight:700 }
     details.leg>summary::-webkit-details-marker{ display:none }
+
+
+    /* Nombres de las parejas: menos “negrita” y un pelín más chico */
+.mhd .names .a strong,
+.mhd .names .b strong{
+  font-size: 1rem;    /* antes 1.06rem */
+  font-weight: 600;   /* antes 800 */
+}
+
+/* En móvil mantenemos la misma fuerza para legibilidad */
+@media (max-width: 600px){
+  .mhd .names .a strong,
+  .mhd .names .b strong{
+    font-size: 1rem;  /* estable y claro en pantallas chicas */
+    font-weight: 600; 
+  }
+}
+
   </style>
 </head>
 <body>
