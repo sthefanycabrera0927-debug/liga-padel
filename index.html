@@ -194,6 +194,46 @@ details.match > summary{
   details.match > summary{ padding-right: 80px; }
   .mhd .meta .badge-done{ top: 8px; right: 10px; font-size: .72rem; }
 }
+/* === Reorganizar fecha y resultado (meta) en dos líneas a la derecha === */
+.mhd{
+  display: flex;
+  align-items: center;
+}
+
+.mhd .names{
+  flex: 1;        /* Nombres ocupan todo el espacio izquierdo */
+}
+
+.mhd .meta{
+  display: flex;
+  flex-direction: column;  /* Fecha arriba - Resultado abajo */
+  align-items: flex-end;   /* Alineado a la derecha */
+  justify-content: center;
+  gap: 4px;
+  min-width: 120px;        /* Para que todo quede ordenado */
+}
+
+/* Ajuste de pills para que no queden tan grandes */
+.mhd .meta .pill{
+  font-size: .78rem;
+  padding: .24rem .5rem;
+}
+
+/* Si hay badge "Hecho", que no empuje nada */
+.mhd .meta .badge-done{
+  order: 3; /* siempre abajo del resultado */
+}
+
+/* En móvil un poquito más compacto */
+@media (max-width: 560px){
+  .mhd .meta{
+    min-width: 100px;
+    gap: 3px;
+  }
+  .mhd .meta .pill{
+    font-size: .72rem;
+  }
+}
 
 
   </style>
